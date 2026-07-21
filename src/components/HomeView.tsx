@@ -35,7 +35,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                 <div className="glass-card rounded-[32px] p-4 shadow-lg border border-brand-100 flex items-center space-x-4 bg-white/90 max-w-sm transition-all hover:shadow-xl hover:scale-102">
                   <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-brand-200 shadow-inner shrink-0">
                     <img
-                      src="/src/assets/images/shibani_logo_small_r_1784631811197.jpg"
+                      src="/images/shibani_logo_small_r_1784631811197.jpg"
                       alt="Shibani Roy Full Logo"
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover"
@@ -108,7 +108,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
               <div className="relative rounded-[40px] border-4 border-white overflow-hidden aspect-square shadow-2xl bg-brand-100">
                 <div className="absolute inset-0 bg-gradient-to-tr from-brand-200/30 to-transparent opacity-45 z-10 pointer-events-none"></div>
                 <img
-                  src={siteContent.hero_image_url || '/src/assets/images/shibani_hero_1784621056791.jpg'}
+                  src={siteContent.hero_image_url || '/images/shibani_hero_1784621056791.jpg'}
                   alt="Shibani Roy virtual AI model portrait"
                   referrerPolicy="no-referrer"
                   className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
@@ -166,7 +166,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
           <div className="order-2 lg:order-1 relative flex justify-center">
             <div className="relative h-72 w-72 sm:h-96 sm:w-96 rounded-full border-4 border-white p-1 overflow-hidden bg-white shadow-2xl transition-transform duration-500 hover:rotate-3">
               <img
-                src={siteContent.avatar_image_url || '/src/assets/images/shibani_avatar_1784621038657.jpg'}
+                src={siteContent.avatar_image_url || '/images/shibani_avatar_1784621038657.jpg'}
                 alt="Shibani Roy portrait"
                 referrerPolicy="no-referrer"
                 className="h-full w-full object-cover rounded-full"

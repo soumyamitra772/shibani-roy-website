@@ -42,7 +42,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
           >
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-brand-300 bg-brand-50 shadow-md shrink-0 transition-transform group-hover:scale-105 duration-300 ring-2 ring-brand-100/40">
               <img
-                src="/src/assets/images/shibani_logo_small_r_1784631811197.jpg"
+                src="/images/shibani_logo_small_r_1784631811197.jpg"
                 alt="SR circular emblem"
                 referrerPolicy="no-referrer"
                 className="h-full w-full object-cover"

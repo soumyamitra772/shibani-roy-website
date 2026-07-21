@@ -19,8 +19,8 @@ export const supabase = isSupabaseConfigured
 // DEFAULT SEED DATA FOR SANDBOX MODE
 // ==========================================
 
-const DEFAULT_AVATAR = '/src/assets/images/shibani_avatar_1784621038657.jpg';
-const DEFAULT_HERO = '/src/assets/images/shibani_hero_1784621056791.jpg';
+const DEFAULT_AVATAR = '/images/shibani_avatar_1784621038657.jpg';
+const DEFAULT_HERO = '/images/shibani_hero_1784621056791.jpg';
 
 const SEED_SITE_CONTENT: SiteContent = {
   hero_title: "Shibani Roy",

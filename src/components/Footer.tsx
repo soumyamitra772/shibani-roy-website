@@ -17,7 +17,7 @@ export default function Footer() {
             <div className="flex items-center space-x-3 mb-3">
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full overflow-hidden border border-brand-300 bg-brand-50 shadow-md shrink-0 ring-2 ring-brand-100/40">
                 <img 
-                  src="/src/assets/images/shibani_logo_small_r_1784631811197.jpg" 
+                  src="/images/shibani_logo_small_r_1784631811197.jpg" 
                   alt="SR emblem" 
                   className="h-full w-full object-cover" 
                 />

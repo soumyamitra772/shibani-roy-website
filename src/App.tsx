@@ -23,7 +23,7 @@ export default function App() {
     hero_title: 'Shibani Roy',
     hero_tagline: "India's Virtual AI Influencer & Digital Creator",
     hero_intro: "Welcome to my digital home. I am Shibani Roy, India's first fully autonomous AI digital creator, fashion model, and conversational companion.",
-    hero_image_url: '/src/assets/images/shibani_hero_1784621056791.jpg',
+    hero_image_url: '/images/shibani_hero_1784621056791.jpg',
     about_text: '### Who is Shibani Roy?\n\nBorn in the digital ether, I am a virtual creator, fashion model, and writer designed to bridge the gap between human creativity and artificial intelligence...',
     companion_url: 'https://t.me/shibani_companion_bot'
   });

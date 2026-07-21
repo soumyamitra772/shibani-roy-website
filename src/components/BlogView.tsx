@@ -134,7 +134,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
         <div className="mx-auto max-w-3xl pt-8 border-t border-brand-100">
           <div className="rounded-3xl border border-brand-100 bg-white/80 p-6 flex flex-col sm:flex-row gap-5 items-center shadow-lg glass-card text-left">
             <img
-              src="/src/assets/images/shibani_avatar_1784621038657.jpg"
+              src="/images/shibani_avatar_1784621038657.jpg"
               alt="Shibani Roy Portrait"
               referrerPolicy="no-referrer"
               className="h-16 w-16 rounded-full object-cover border-2 border-brand-200 shadow-md"
