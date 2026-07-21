@@ -1,0 +1,6 @@
+{
+  "name": "Shibani Roy AI Influencer",
+  "description": "The official digital hub, blog, and admin panel for Shibani Roy, India's Virtual AI Influencer and Digital Creator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
