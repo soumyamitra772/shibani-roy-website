@@ -3,10 +3,10 @@
   "routes": [
     { "src": "/images/(.*)", "dest": "/images/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    {
-      "src": "^/blog/(.+)$",
-      "dest": "/api/index"
-    },
+    { "src": "^/blog/(.+)$", "dest": "/api/index" },
+    { "src": "^/about$", "dest": "/api/index" },
+    { "src": "^/blog$", "dest": "/api/index" },
+    { "src": "^/contact$", "dest": "/api/index" },
     {
       "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|webp|woff|woff2|json))",
       "dest": "/$1"

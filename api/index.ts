@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync } from 'fs';
 import path, { join } from 'path';
-import { processHtmlForRequest } from '../src/server-seo';
+import { processHtmlForRequest } from './server-seo';
 
 function getRawHtml(): string {
   const cwd = process.cwd();
@@ -17,7 +17,7 @@ function getRawHtml(): string {
       continue;
     }
   }
-  // Fallback HTML string
+  // Fallback HTML template
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
