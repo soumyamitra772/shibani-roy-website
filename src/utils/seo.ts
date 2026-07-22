@@ -107,9 +107,9 @@ export function injectMetaTags(html: string, options: MetaTagOptions, baseOrigin
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    const regex = new RegExp(`<meta\\s+${attrName}=["']${attrVal}["']\\s+content=["'][^"']*["']\\s*\\/?>`, 'gi');
-    if (regex.test(updatedHtml)) {
-      updatedHtml = updatedHtml.replace(regex, `<meta ${attrName}="${attrVal}" content="${escapedContent}" />`);
+    const searchRegex = new RegExp(`<meta\\s+${attrName}=["']${attrVal}["'][^>]*\\/?>`, 'i');
+    if (searchRegex.test(updatedHtml)) {
+      updatedHtml = updatedHtml.replace(searchRegex, `<meta ${attrName}="${attrVal}" content="${escapedContent}" />`);
     } else {
       updatedHtml = updatedHtml.replace('</head>', `  <meta ${attrName}="${attrVal}" content="${escapedContent}" />\n</head>`);
     }
