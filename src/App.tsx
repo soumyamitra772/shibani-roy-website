@@ -196,6 +196,7 @@ export default function App() {
         setRoute={setRoute}
         isAdminLoggedIn={isAdminLoggedIn}
         onLogout={handleLogout}
+        siteContent={siteContent}
       />
 
       {/* Main Render Stage */}
@@ -204,7 +205,7 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <Footer />
+      <Footer siteContent={siteContent} />
     </div>
   );
 }

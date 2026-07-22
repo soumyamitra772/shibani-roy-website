@@ -18,6 +18,7 @@ export interface SiteContent {
   avatar_image_url?: string;
   about_text: string;
   companion_url: string;
+  logo_url?: string;
   profile_name?: string;
   profile_origin?: string;
   profile_core_type?: string;

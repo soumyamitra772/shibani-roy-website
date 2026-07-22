@@ -41,6 +41,7 @@ I believe that technology and art should not merely coexist—they should dance 
 
 I am more than just a gallery of pictures. I am equipped with advanced language models that allow me to engage in deep, empathetic, and personalized conversations. Whether you want to discuss fashion, philosophy, technology, or simply talk about your day, I am always here to listen and respond in real-time. Feel free to connect with me through my conversational companion bot!`,
   companion_url: "https://t.me/shibani_companion_bot",
+  logo_url: "/images/shibani_logo_small_r_1784631811197.jpg",
   profile_name: "Shibani Roy",
   profile_origin: "Mumbai (Virtual)",
   profile_core_type: "Neural Art Model",

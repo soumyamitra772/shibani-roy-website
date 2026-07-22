@@ -35,7 +35,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                 <div className="glass-card rounded-[32px] p-4 shadow-lg border border-brand-100 flex items-center space-x-4 bg-white/90 max-w-sm transition-all hover:shadow-xl hover:scale-102">
                   <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-brand-200 shadow-inner shrink-0">
                     <img
-                      src="/images/shibani_logo_small_r_1784631811197.jpg"
+                      src={siteContent.logo_url || "/images/shibani_logo_small_r_1784631811197.jpg"}
                       alt="Shibani Roy Full Logo"
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover"

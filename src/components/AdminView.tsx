@@ -53,6 +53,7 @@ export default function AdminView({
   const [isUploadingHero, setIsUploadingHero] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingAboutImage, setIsUploadingAboutImage] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const [aboutText, setAboutText] = useState(siteContent.about_text || '');
   const [isSavingAbout, setIsSavingAbout] = useState(false);
@@ -217,6 +218,22 @@ export default function AdminView({
       alert('Failed to upload about image.');
     } finally {
       setIsUploadingAboutImage(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const imageUrl = await dbService.uploadImage(file);
+      setHomeForm(prev => ({ ...prev, logo_url: imageUrl }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload brand logo.');
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -858,7 +875,69 @@ export default function AdminView({
                   ></textarea>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Image Specifications & Size Guide Banner */}
+                <div className="bg-brand-50/40 border border-brand-100 rounded-[20px] p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                  <div>
+                    <h5 className="font-display font-bold text-xs text-brand-900 tracking-wider uppercase">Media Assets Specification Guide</h5>
+                    <p className="text-[11px] text-zinc-600 mt-1">Recommended dimensions for optimal visual rendering across all responsive layouts:</p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-brand-100/50 shadow-sm">
+                      <span className="block text-[9px] font-mono font-bold text-brand-600 uppercase">Header & Footer Logo</span>
+                      <span className="text-[11px] font-bold text-brand-950">48 × 48 px (1:1 circular)</span>
+                    </div>
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-brand-100/50 shadow-sm">
+                      <span className="block text-[9px] font-mono font-bold text-brand-600 uppercase">Home Page Logo</span>
+                      <span className="text-[11px] font-bold text-brand-950">80 × 80 px (1:1 square)</span>
+                    </div>
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-brand-100/50 shadow-sm">
+                      <span className="block text-[9px] font-mono font-bold text-brand-600 uppercase">Home Hero & Avatar</span>
+                      <span className="text-[11px] font-bold text-brand-950 font-mono">1:1 Ratio (Square)</span>
+                    </div>
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-brand-100/50 shadow-sm">
+                      <span className="block text-[9px] font-mono font-bold text-brand-600 uppercase">About Scene Banner</span>
+                      <span className="text-[11px] font-bold text-brand-950 font-mono">16:9 Ratio (Landscape)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Brand Logo Image */}
+                  <div className="space-y-2 border border-brand-100 rounded-[24px] p-5 bg-brand-50/20">
+                    <label className="text-xs font-mono text-brand-700 font-bold block">Brand Logo / Circular Emblem</label>
+                    <div className="flex flex-col gap-3">
+                      <div className="relative h-20 w-20 rounded-full overflow-hidden border border-brand-200 bg-white shadow-sm shrink-0 mx-auto">
+                        {homeForm.logo_url ? (
+                          <img src={homeForm.logo_url} alt="Brand logo preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-brand-300 text-[10px] font-mono">No Image</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={homeForm.logo_url || ''}
+                          onChange={(e) => setHomeForm(prev => ({ ...prev, logo_url: e.target.value }))}
+                          placeholder="Paste logo URL..."
+                          className="w-full bg-white border border-brand-200 rounded-full py-2 px-4 text-xs text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm"
+                        />
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full bg-white border border-brand-200 hover:bg-brand-50 transition px-3 py-1.5 text-[11px] font-semibold text-brand-700 shadow-sm mx-auto">
+                            <Upload className="h-3.5 w-3.5 text-brand-500" />
+                            <span>{isUploadingLogo ? 'Uploading...' : 'Upload'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                              disabled={isUploadingLogo}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Home Hero Image */}
                   <div className="space-y-2 border border-brand-100 rounded-[24px] p-5 bg-brand-50/20">
                     <label className="text-xs font-mono text-brand-700 font-bold block">Home Section Hero Image (1:1)</label>

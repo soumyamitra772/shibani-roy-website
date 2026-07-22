@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { isSupabaseConfigured } from '../services/db';
+import { SiteContent } from '../types';
 import { Sparkles, Menu, X, Database, Info, ExternalLink, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface HeaderProps {
@@ -7,9 +8,10 @@ interface HeaderProps {
   setRoute: (route: { page: string; param: string }) => void;
   isAdminLoggedIn: boolean;
   onLogout: () => void;
+  siteContent?: SiteContent;
 }
 
-export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogout }: HeaderProps) {
+export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogout, siteContent }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
 
@@ -42,7 +44,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
           >
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-brand-300 bg-brand-50 shadow-md shrink-0 transition-transform group-hover:scale-105 duration-300 ring-2 ring-brand-100/40">
               <img
-                src="/images/shibani_logo_small_r_1784631811197.jpg"
+                src={siteContent?.logo_url || "/images/shibani_logo_small_r_1784631811197.jpg"}
                 alt="SR circular emblem"
                 referrerPolicy="no-referrer"
                 className="h-full w-full object-cover"
