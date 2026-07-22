@@ -142,7 +142,7 @@ export default function App() {
   // 4. Dynamic Open Graph & Meta Tag Updates
   useEffect(() => {
     const origin = window.location.origin.includes('localhost') || window.location.origin.includes('run.app')
-      ? 'https://shibani-roy-website.vercel.app'
+      ? 'https://shibani-roy.vercel.app'
       : window.location.origin;
 
     if (route.page === 'blog-post' && route.param) {

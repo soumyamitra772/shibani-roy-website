@@ -27,7 +27,11 @@ app.get('*', async (req, res) => {
       return res.status(404).send('Not Found');
     }
 
-    const finalHtml = await processHtmlForRequest(rawHtml, req.url);
+    const host = (req.headers['x-forwarded-host'] || req.headers.host || '') as string;
+    const proto = (req.headers['x-forwarded-proto'] || 'https') as string;
+    const baseOrigin = host ? `${proto}://${host}` : 'https://shibani-roy.vercel.app';
+
+    const finalHtml = await processHtmlForRequest(rawHtml, req.url, baseOrigin);
     res.status(200).set({ 'Content-Type': 'text/html' }).send(finalHtml);
   } catch (err) {
     console.error('Vercel serverless error:', err);

@@ -20,16 +20,19 @@ export function stripMarkdown(content: string): string {
     .trim();
 }
 
+const DEFAULT_BASE_URL = 'https://shibani-roy.vercel.app';
+
 /**
  * Ensures an image URL is an absolute URL for social crawlers
  */
-export function getAbsoluteImageUrl(imageUrl?: string): string {
-  if (!imageUrl) return 'https://shibani-roy-website.vercel.app/images/shibani_hero_1784621056791.jpg';
+export function getAbsoluteImageUrl(imageUrl?: string, baseOrigin?: string): string {
+  const origin = baseOrigin || DEFAULT_BASE_URL;
+  if (!imageUrl) return `${origin}/images/shibani_hero_1784621056791.jpg`;
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
+    return imageUrl.replace('https://shibani-roy-website.vercel.app', origin);
   }
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `https://shibani-roy-website.vercel.app${cleanPath}`;
+  return `${origin}${cleanPath}`;
 }
 
 /**
@@ -48,8 +51,9 @@ function setMetaTag(attributeName: 'name' | 'property', attributeValue: string, 
 /**
  * Reusable helper function to update page SEO & social preview meta tags
  */
-export function updateMetaTags({ title, description, image, url, type }: MetaTagOptions) {
-  const absoluteImage = getAbsoluteImageUrl(image);
+export function updateMetaTags({ title, description, image, url, type }: MetaTagOptions, baseOrigin?: string) {
+  const origin = baseOrigin || (typeof window !== 'undefined' ? window.location.origin : DEFAULT_BASE_URL);
+  const absoluteImage = getAbsoluteImageUrl(image, origin);
 
   if (title) {
     document.title = title;
@@ -63,14 +67,21 @@ export function updateMetaTags({ title, description, image, url, type }: MetaTag
     setMetaTag('name', 'twitter:description', description);
   }
 
+  setMetaTag('property', 'og:site_name', 'Shibani Roy');
+
   if (absoluteImage) {
     setMetaTag('property', 'og:image', absoluteImage);
+    setMetaTag('property', 'og:image:secure_url', absoluteImage);
+    setMetaTag('property', 'og:image:type', absoluteImage.endsWith('.png') ? 'image/png' : 'image/jpeg');
+    setMetaTag('property', 'og:image:width', '1200');
+    setMetaTag('property', 'og:image:height', '630');
     setMetaTag('name', 'twitter:image', absoluteImage);
   }
 
   if (url) {
-    setMetaTag('property', 'og:url', url);
-    setMetaTag('name', 'twitter:url', url);
+    const cleanUrl = url.replace('https://shibani-roy-website.vercel.app', origin);
+    setMetaTag('property', 'og:url', cleanUrl);
+    setMetaTag('name', 'twitter:url', cleanUrl);
   }
 
   if (type) {
@@ -84,8 +95,9 @@ export function updateMetaTags({ title, description, image, url, type }: MetaTag
 /**
  * Server-side string injection of Meta / Open Graph tags into index.html
  */
-export function injectMetaTags(html: string, options: MetaTagOptions): string {
-  const absoluteImage = getAbsoluteImageUrl(options.image);
+export function injectMetaTags(html: string, options: MetaTagOptions, baseOrigin?: string): string {
+  const origin = baseOrigin || DEFAULT_BASE_URL;
+  const absoluteImage = getAbsoluteImageUrl(options.image, origin);
   let updatedHtml = html;
 
   const replaceOrInsertMeta = (attrName: 'name' | 'property', attrVal: string, contentVal: string) => {
@@ -103,6 +115,8 @@ export function injectMetaTags(html: string, options: MetaTagOptions): string {
     }
   };
 
+  replaceOrInsertMeta('property', 'og:site_name', 'Shibani Roy');
+
   if (options.title) {
     const escapedTitle = options.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     updatedHtml = updatedHtml.replace(/<title>[^<]*<\/title>/i, `<title>${escapedTitle}</title>`);
@@ -118,12 +132,17 @@ export function injectMetaTags(html: string, options: MetaTagOptions): string {
 
   if (absoluteImage) {
     replaceOrInsertMeta('property', 'og:image', absoluteImage);
+    replaceOrInsertMeta('property', 'og:image:secure_url', absoluteImage);
+    replaceOrInsertMeta('property', 'og:image:type', absoluteImage.endsWith('.png') ? 'image/png' : 'image/jpeg');
+    replaceOrInsertMeta('property', 'og:image:width', '1200');
+    replaceOrInsertMeta('property', 'og:image:height', '630');
     replaceOrInsertMeta('name', 'twitter:image', absoluteImage);
   }
 
   if (options.url) {
-    replaceOrInsertMeta('property', 'og:url', options.url);
-    replaceOrInsertMeta('name', 'twitter:url', options.url);
+    const cleanUrl = options.url.replace('https://shibani-roy-website.vercel.app', origin);
+    replaceOrInsertMeta('property', 'og:url', cleanUrl);
+    replaceOrInsertMeta('name', 'twitter:url', cleanUrl);
   }
 
   if (options.type) {

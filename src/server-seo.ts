@@ -16,7 +16,8 @@ const supabase = isSupabaseEnvConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOptions> {
+export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): Promise<MetaTagOptions> {
+  const origin = baseOrigin || 'https://shibani-roy.vercel.app';
   const cleanPath = urlPath.split('?')[0].replace(/\/$/, '') || '/';
 
   // Check for article route: /blog/:slug
@@ -47,7 +48,7 @@ export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOption
         title: `${post.title} | Shibani Roy`,
         description: plainTextExcerpt || 'Read this article by Shibani Roy.',
         image: post.feature_image_url || SEED_SITE_CONTENT.hero_image_url,
-        url: `https://shibani-roy-website.vercel.app/blog/${post.slug}`,
+        url: `${origin}/blog/${post.slug}`,
         type: 'article',
       };
     }
@@ -58,7 +59,7 @@ export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOption
       title: 'About | Shibani Roy',
       description: SEED_SITE_CONTENT.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
       image: SEED_SITE_CONTENT.about_image_url || SEED_SITE_CONTENT.hero_image_url,
-      url: 'https://shibani-roy-website.vercel.app/about',
+      url: `${origin}/about`,
       type: 'website',
     };
   }
@@ -68,7 +69,7 @@ export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOption
       title: 'Blog & Journals | Shibani Roy',
       description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
       image: SEED_SITE_CONTENT.hero_image_url,
-      url: 'https://shibani-roy-website.vercel.app/blog',
+      url: `${origin}/blog`,
       type: 'website',
     };
   }
@@ -78,7 +79,7 @@ export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOption
       title: 'Contact | Shibani Roy',
       description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
       image: SEED_SITE_CONTENT.hero_image_url,
-      url: 'https://shibani-roy-website.vercel.app/contact',
+      url: `${origin}/contact`,
       type: 'website',
     };
   }
@@ -87,13 +88,13 @@ export async function resolveMetaForPath(urlPath: string): Promise<MetaTagOption
   return {
     title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
     description: "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive. Launched in August 2025, she covers Indian fashion, culture, lifestyle and AI. Chat with her on the companion app.",
-    image: 'https://shibani-roy-website.vercel.app/images/shibani_hero_1784621056791.jpg',
-    url: 'https://shibani-roy-website.vercel.app/',
+    image: `${origin}/images/shibani_hero_1784621056791.jpg`,
+    url: `${origin}/`,
     type: 'website',
   };
 }
 
-export async function processHtmlForRequest(rawHtml: string, urlPath: string): Promise<string> {
-  const metaOptions = await resolveMetaForPath(urlPath);
-  return injectMetaTags(rawHtml, metaOptions);
+export async function processHtmlForRequest(rawHtml: string, urlPath: string, baseOrigin?: string): Promise<string> {
+  const metaOptions = await resolveMetaForPath(urlPath, baseOrigin);
+  return injectMetaTags(rawHtml, metaOptions, baseOrigin);
 }

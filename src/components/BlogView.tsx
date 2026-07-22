@@ -66,7 +66,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
 
     const handleShare = () => {
       const origin = window.location.origin.includes('localhost') || window.location.origin.includes('run.app')
-        ? 'https://shibani-roy-website.vercel.app'
+        ? 'https://shibani-roy.vercel.app'
         : window.location.origin;
       const cleanShareUrl = `${origin}/blog/${post.slug}`;
       navigator.clipboard.writeText(cleanShareUrl);
