@@ -1,23 +1,19 @@
 {
   "version": 2,
-  "outputDirectory": "dist",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    },
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     { "src": "/images/(.*)", "dest": "/images/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "^/blog/(.+)$", "dest": "/api/index" },
-    { "src": "^/about$", "dest": "/api/index" },
-    { "src": "^/blog$", "dest": "/api/index" },
-    { "src": "/(.*)", "dest": "/$1" }
+    {
+      "src": "^/blog/(.+)$",
+      "dest": "/api/index"
+    },
+    {
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|webp|woff|woff2|json))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
