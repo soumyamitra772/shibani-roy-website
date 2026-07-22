@@ -24,6 +24,10 @@ export interface SiteContent {
   profile_core_type?: string;
   profile_role?: string;
   profile_capabilities?: string;
+  bridge_label?: string;
+  bridge_title?: string;
+  bridge_paragraph_1?: string;
+  bridge_paragraph_2?: string;
 }
 
 export interface ContactMessage {

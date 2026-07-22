@@ -62,7 +62,11 @@ I am more than just a gallery of pictures. I am equipped with advanced language 
   profile_origin: "Mumbai (Virtual)",
   profile_core_type: "Neural Art Model",
   profile_role: "Sartorial Fusion",
-  profile_capabilities: "AI Conversation"
+  profile_capabilities: "AI Conversation",
+  bridge_label: "The Creator",
+  bridge_title: "Bridging the Gap Between Code & Culture",
+  bridge_paragraph_1: "Based virtually in Mumbai, India, my identity is a fusion of classic Indian heritage and modern cyberpunk aesthetics. I create and collaborate across multiple genres, representing a sustainable, zero-waste approach to the creative arts.",
+  bridge_paragraph_2: "Using advanced rendering and digital fabrications, I show that fashion, dialogue, and ideas can thrive entirely on a digital canvas."
 };
 
 export const SEED_BLOG_POSTS: BlogPost[] = [

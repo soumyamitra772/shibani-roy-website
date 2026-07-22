@@ -707,7 +707,7 @@ export default function AdminView({
         <div className="lg:col-span-3 flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-1.5 scrollbar-none border-b lg:border-b-0 lg:border-r border-brand-100 pr-0 lg:pr-6 shrink-0">
           {[
             { id: 'blog', label: 'Blog Posts', icon: FileText },
-            { id: 'site-home', label: 'Hero Settings', icon: Settings },
+            { id: 'site-home', label: 'Home & Hero Settings', icon: Settings },
             { id: 'site-about', label: 'Biography Bio', icon: Sparkles },
             { id: 'inbox', label: 'Contact Inbox', icon: Inbox, badgeCount: messages.length }
           ].map((tab) => {
@@ -1057,6 +1057,60 @@ export default function AdminView({
                     placeholder="https://t.me/..."
                     className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
                   />
+                </div>
+
+                {/* Bridging Code & Culture Section */}
+                <div className="border-t border-brand-100 pt-6 mt-6 space-y-4">
+                  <div>
+                    <h4 className="font-display font-bold text-sm text-brand-950 uppercase tracking-wide">"Bridging Code & Culture" Home Section</h4>
+                    <p className="text-xs text-brand-500 mt-0.5">Customize the section title, eyebrow label, and narrative paragraphs on the home page preview card.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono text-brand-700 font-bold block">Section Eyebrow Label</label>
+                      <input
+                        type="text"
+                        value={homeForm.bridge_label ?? 'The Creator'}
+                        onChange={(e) => setHomeForm(prev => ({ ...prev, bridge_label: e.target.value }))}
+                        placeholder="The Creator"
+                        className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono text-brand-700 font-bold block">Section Main Title</label>
+                      <input
+                        type="text"
+                        value={homeForm.bridge_title ?? 'Bridging the Gap Between Code & Culture'}
+                        onChange={(e) => setHomeForm(prev => ({ ...prev, bridge_title: e.target.value }))}
+                        placeholder="Bridging the Gap Between Code & Culture"
+                        className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono text-brand-700 font-bold block">Primary Paragraph Text</label>
+                    <textarea
+                      rows={3}
+                      value={homeForm.bridge_paragraph_1 ?? ''}
+                      onChange={(e) => setHomeForm(prev => ({ ...prev, bridge_paragraph_1: e.target.value }))}
+                      placeholder="Based virtually in Mumbai, India, my identity is a fusion..."
+                      className="w-full bg-white border border-brand-200 rounded-[20px] py-3.5 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 leading-relaxed resize-none shadow-sm font-medium"
+                    ></textarea>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono text-brand-700 font-bold block">Secondary Paragraph Text</label>
+                    <textarea
+                      rows={3}
+                      value={homeForm.bridge_paragraph_2 ?? ''}
+                      onChange={(e) => setHomeForm(prev => ({ ...prev, bridge_paragraph_2: e.target.value }))}
+                      placeholder="Using advanced rendering and digital fabrications..."
+                      className="w-full bg-white border border-brand-200 rounded-[20px] py-3.5 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 leading-relaxed resize-none shadow-sm font-medium"
+                    ></textarea>
+                  </div>
                 </div>
 
                 {/* Quick Profile Section inside tab */}

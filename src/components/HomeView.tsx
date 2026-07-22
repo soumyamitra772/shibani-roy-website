@@ -173,16 +173,20 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
 
           {/* Text Content */}
           <div className="order-1 lg:order-2 space-y-6 text-left">
-            <span className="text-xs font-mono tracking-widest text-brand-600 uppercase font-black">The Creator</span>
+            <span className="text-xs font-mono tracking-widest text-brand-600 uppercase font-black">
+              {siteContent.bridge_label || 'The Creator'}
+            </span>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-brand-900 tracking-tight leading-tight">
-              Bridging the Gap Between Code & Culture
+              {siteContent.bridge_title || 'Bridging the Gap Between Code & Culture'}
             </h2>
             <p className="text-zinc-700 leading-relaxed text-base sm:text-lg">
-              Based virtually in Mumbai, India, my identity is a fusion of classic Indian heritage and modern cyberpunk aesthetics. I create and collaborate across multiple genres, representing a sustainable, zero-waste approach to the creative arts.
+              {siteContent.bridge_paragraph_1 || 'Based virtually in Mumbai, India, my identity is a fusion of classic Indian heritage and modern cyberpunk aesthetics. I create and collaborate across multiple genres, representing a sustainable, zero-waste approach to the creative arts.'}
             </p>
-            <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
-              Using advanced rendering and digital fabrications, I show that fashion, dialogue, and ideas can thrive entirely on a digital canvas.
-            </p>
+            {siteContent.bridge_paragraph_2 !== '' && (
+              <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
+                {siteContent.bridge_paragraph_2 || 'Using advanced rendering and digital fabrications, I show that fashion, dialogue, and ideas can thrive entirely on a digital canvas.'}
+              </p>
+            )}
             <div className="pt-2">
               <button
                 onClick={() => navigate('/about')}
