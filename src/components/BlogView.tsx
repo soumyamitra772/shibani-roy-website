@@ -42,7 +42,16 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
 
   // 1. DETAIL VIEW
   if (selectedSlug) {
-    const post = posts.find(p => p.slug === selectedSlug);
+    let post = posts.find(p => p.slug === selectedSlug);
+
+    if (!post) {
+      const cleanTarget = selectedSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+      post = posts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+    }
+
+    if (!post) {
+      post = posts.find(p => selectedSlug.includes(p.slug) || p.slug.includes(selectedSlug));
+    }
 
     if (!post) {
       return (

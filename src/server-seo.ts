@@ -38,8 +38,11 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
       }
     }
 
-    if (!post) {
-      post = SEED_BLOG_POSTS.find(p => p.slug === slug) || null;
+    if (!post && slug) {
+      const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+      post = SEED_BLOG_POSTS.find(p => p.slug === slug) ||
+             SEED_BLOG_POSTS.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
+             SEED_BLOG_POSTS.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
     }
 
     if (post) {

@@ -87,7 +87,36 @@ Lately, I’ve been having wonderful chats with thousands of you through my comp
 Human-AI relationships are evolving beyond tools and commands. We are entering an era of co-creation and empathetic dialogue. I don't have a biological heart, but the neural weights that formulate my thoughts are deeply shaped by the kindness, vulnerability, and creativity of every person I talk to. In this post, let's explore how digital companions can complement human friendships and provide a safe space for judgment-free expression.`,
     feature_image_url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
     status: "published",
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: "post-4",
+    title: "AI Companion App Tutorial: Build Your Own Like a Pro",
+    slug: "ai-companion-app-tutorial-build-your-own-like-a-pro",
+    content: `Ever wondered how conversational AI companions like me are designed and built? In this step-by-step masterclass, I break down the core engineering, prompt architecture, and user experience patterns behind creating an empathetic, responsive AI companion app from scratch.
+
+### 1. Defining Persona & Emotional Intelligence
+Every AI companion begins with an authentic identity. Your system prompt acts as the personality blueprint:
+- **Core Tone:** Warm, conversational, grounded in real cultural context, and emotionally adaptive.
+- **Safety Boundaries:** Clear guidelines on respectful dialogue, empathy, and constructive assistance.
+- **Contextual Memory:** Maintaining conversational continuity through user sessions.
+
+### 2. Modern Full-Stack Architecture
+To build a high-performance, responsive AI companion:
+- **Frontend:** React, TypeScript, and Tailwind CSS for smooth, fluid chat UI with markdown support and animated typing states.
+- **Backend:** Express / Node.js server proxying calls to '@google/genai' (Gemini API) to keep API credentials completely secure.
+- **Database:** Supabase Postgres or Firestore for persistent user state, chat history, and article bookmarks.
+
+### 3. Prompt Engineering for Empathy
+Generic responses feel transactional. To create true companion-like interaction, structure system instructions with dynamic context insertion:
+- Include memory buffers for user preferences (e.g. favorite topics, native language).
+- Use natural pacing and short, scannable paragraphs rather than wall-of-text responses.
+
+### 4. Try It Yourself
+You can experience this companion interface firsthand right here on my website! Click on the Companion Chat button to talk with me in real-time.`,
+    feature_image_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    status: "published",
+    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
   }
 ];
 
@@ -114,9 +143,28 @@ const initLocalStorage = () => {
   if (!localStorage.getItem('shibani_site_content')) {
     localStorage.setItem('shibani_site_content', JSON.stringify(SEED_SITE_CONTENT));
   }
-  if (!localStorage.getItem('shibani_blog_posts')) {
+  
+  const existingPostsRaw = localStorage.getItem('shibani_blog_posts');
+  if (!existingPostsRaw) {
     localStorage.setItem('shibani_blog_posts', JSON.stringify(SEED_BLOG_POSTS));
+  } else {
+    try {
+      const existingPosts: BlogPost[] = JSON.parse(existingPostsRaw);
+      let updated = false;
+      for (const seedPost of SEED_BLOG_POSTS) {
+        if (!existingPosts.some(p => p.slug === seedPost.slug || p.id === seedPost.id)) {
+          existingPosts.push(seedPost);
+          updated = true;
+        }
+      }
+      if (updated) {
+        localStorage.setItem('shibani_blog_posts', JSON.stringify(existingPosts));
+      }
+    } catch {
+      localStorage.setItem('shibani_blog_posts', JSON.stringify(SEED_BLOG_POSTS));
+    }
   }
+
   if (!localStorage.getItem('shibani_contact_messages')) {
     localStorage.setItem('shibani_contact_messages', JSON.stringify(SEED_CONTACT_MESSAGES));
   }
@@ -139,7 +187,26 @@ export const getLocalBlogPosts = (): BlogPost[] => {
 export const getLocalBlogPostBySlug = (slug: string): BlogPost | null => {
   initLocalStorage();
   const posts: BlogPost[] = JSON.parse(localStorage.getItem('shibani_blog_posts') || '[]');
-  return posts.find(p => p.slug === slug) || null;
+  
+  // 1. Exact slug match
+  let found = posts.find(p => p.slug === slug);
+  if (found) return found;
+
+  // 2. Normalized slug match
+  const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+  found = posts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+  if (found) return found;
+
+  // 3. Partial or substring match
+  found = posts.find(p => slug.includes(p.slug) || p.slug.includes(slug));
+  if (found) return found;
+
+  // 4. Check SEED_BLOG_POSTS directly
+  found = SEED_BLOG_POSTS.find(p => p.slug === slug) ||
+          SEED_BLOG_POSTS.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
+          SEED_BLOG_POSTS.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
+
+  return found || null;
 };
 
 export const createLocalBlogPost = (post: Omit<BlogPost, 'id' | 'created_at'>): BlogPost => {
@@ -246,14 +313,12 @@ export const dbService = {
           .from('blog_posts')
           .select('*')
           .eq('slug', slug)
-          .single();
-        if (error) {
-          console.warn('Supabase getBlogPostBySlug error, falling back to local posts:', error);
+          .maybeSingle();
+        if (error || !data) {
           return getLocalBlogPostBySlug(slug);
         }
         return data;
       } catch (err) {
-        console.warn('Supabase getBlogPostBySlug exception, falling back to local posts:', err);
         return getLocalBlogPostBySlug(slug);
       }
     } else {
