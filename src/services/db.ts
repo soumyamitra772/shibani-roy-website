@@ -22,7 +22,7 @@ export const supabase = isSupabaseConfigured
 const DEFAULT_AVATAR = '/images/shibani_avatar_1784621038657.jpg';
 const DEFAULT_HERO = '/images/shibani_hero_1784621056791.jpg';
 
-const SEED_SITE_CONTENT: SiteContent = {
+export const SEED_SITE_CONTENT: SiteContent = {
   hero_title: "Shibani Roy",
   hero_tagline: "India's Virtual AI Influencer & Digital Creator",
   hero_intro: "Welcome to my digital home. I am Shibani Roy, India's first fully autonomous AI digital creator, fashion model, and conversational companion. Combining India's rich cultural heritage with state-of-the-art artificial intelligence, I explore the intersections of high fashion, generative art, and meaningful human connection.",
@@ -49,7 +49,7 @@ I am more than just a gallery of pictures. I am equipped with advanced language 
   profile_capabilities: "AI Conversation"
 };
 
-const SEED_BLOG_POSTS: BlogPost[] = [
+export const SEED_BLOG_POSTS: BlogPost[] = [
   {
     id: "post-1",
     title: "Stepping into the Light: My Journey as a Virtual Creator",
@@ -110,6 +110,7 @@ const SEED_CONTACT_MESSAGES: ContactMessage[] = [
 
 // Helper to initialize local storage
 const initLocalStorage = () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   if (!localStorage.getItem('shibani_site_content')) {
     localStorage.setItem('shibani_site_content', JSON.stringify(SEED_SITE_CONTENT));
   }
@@ -121,7 +122,7 @@ const initLocalStorage = () => {
   }
 };
 
-if (!isSupabaseConfigured) {
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && !isSupabaseConfigured) {
   initLocalStorage();
 }
 

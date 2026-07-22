@@ -86,10 +86,38 @@ export default function App() {
     }
   }, []);
 
-  // 3. Hash Router Handler
+  // 3. Router Handler (Supports Clean Path & Hash routing)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash || '#/';
+    const handleRouteChange = () => {
+      const pathname = window.location.pathname;
+      const hash = window.location.hash || '';
+
+      if (pathname.startsWith('/blog/')) {
+        const slug = pathname.replace('/blog/', '').replace(/\/$/, '');
+        if (slug) {
+          setRoute({ page: 'blog-post', param: slug });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      } else if (pathname === '/about' || pathname === '/about/') {
+        setRoute({ page: 'about', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else if (pathname === '/blog' || pathname === '/blog/') {
+        setRoute({ page: 'blog', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else if (pathname === '/contact' || pathname === '/contact/') {
+        setRoute({ page: 'contact', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else if (pathname === '/admin' || pathname === '/admin/') {
+        setRoute({ page: 'admin', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Hash Fallback
       if (hash.startsWith('#/blog/')) {
         const slug = hash.replace('#/blog/', '');
         setRoute({ page: 'blog-post', param: slug });
@@ -104,19 +132,26 @@ export default function App() {
       } else {
         setRoute({ page: 'home', param: '' });
       }
-      
-      // Scroll smoothly to top on navigation change
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Execute initially
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    handleRouteChange(); // Execute initially
 
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   // 4. Dynamic Open Graph & Meta Tag Updates
   useEffect(() => {
+    const origin = window.location.origin.includes('localhost') || window.location.origin.includes('run.app')
+      ? 'https://shibani-roy-website.vercel.app'
+      : window.location.origin;
+
     if (route.page === 'blog-post' && route.param) {
       const post = blogPosts.find((p) => p.slug === route.param);
       if (post) {
@@ -125,7 +160,7 @@ export default function App() {
           title: `${post.title} | Shibani Roy`,
           description: plainTextExcerpt || 'Read this article by Shibani Roy.',
           image: post.feature_image_url || siteContent.hero_image_url,
-          url: `https://shibani-roy-website.vercel.app/#/blog/${post.slug}`,
+          url: `${origin}/blog/${post.slug}`,
           type: 'article',
         });
         return;
@@ -137,7 +172,7 @@ export default function App() {
         title: 'About | Shibani Roy',
         description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
         image: siteContent.about_image_url || siteContent.hero_image_url,
-        url: 'https://shibani-roy-website.vercel.app/#/about',
+        url: `${origin}/about`,
         type: 'website',
       });
       return;
@@ -148,7 +183,7 @@ export default function App() {
         title: 'Blog & Journals | Shibani Roy',
         description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
         image: siteContent.hero_image_url,
-        url: 'https://shibani-roy-website.vercel.app/#/blog',
+        url: `${origin}/blog`,
         type: 'website',
       });
       return;
@@ -159,7 +194,7 @@ export default function App() {
         title: 'Contact | Shibani Roy',
         description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
         image: siteContent.hero_image_url,
-        url: 'https://shibani-roy-website.vercel.app/#/contact',
+        url: `${origin}/contact`,
         type: 'website',
       });
       return;
@@ -167,10 +202,10 @@ export default function App() {
 
     // Default / Home page (route.page === 'home')
     updateMetaTags({
-      title: "Shibani Roy | India's First Virtual AI Influencer",
+      title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
       description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
       image: siteContent.hero_image_url,
-      url: 'https://shibani-roy-website.vercel.app/',
+      url: `${origin}/`,
       type: 'website',
     });
   }, [route, blogPosts, siteContent]);

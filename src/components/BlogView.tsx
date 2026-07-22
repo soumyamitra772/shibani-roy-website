@@ -64,7 +64,11 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
       .slice(0, 3);
 
     const handleShare = () => {
-      navigator.clipboard.writeText(window.location.href);
+      const origin = window.location.origin.includes('localhost') || window.location.origin.includes('run.app')
+        ? 'https://shibani-roy-website.vercel.app'
+        : window.location.origin;
+      const cleanShareUrl = `${origin}/blog/${post.slug}`;
+      navigator.clipboard.writeText(cleanShareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     };

@@ -80,3 +80,57 @@ export function updateMetaTags({ title, description, image, url, type }: MetaTag
   // Always set twitter:card to summary_large_image
   setMetaTag('name', 'twitter:card', 'summary_large_image');
 }
+
+/**
+ * Server-side string injection of Meta / Open Graph tags into index.html
+ */
+export function injectMetaTags(html: string, options: MetaTagOptions): string {
+  const absoluteImage = getAbsoluteImageUrl(options.image);
+  let updatedHtml = html;
+
+  const replaceOrInsertMeta = (attrName: 'name' | 'property', attrVal: string, contentVal: string) => {
+    const escapedContent = contentVal
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const regex = new RegExp(`<meta\\s+${attrName}=["']${attrVal}["']\\s+content=["'][^"']*["']\\s*\\/?>`, 'gi');
+    if (regex.test(updatedHtml)) {
+      updatedHtml = updatedHtml.replace(regex, `<meta ${attrName}="${attrVal}" content="${escapedContent}" />`);
+    } else {
+      updatedHtml = updatedHtml.replace('</head>', `  <meta ${attrName}="${attrVal}" content="${escapedContent}" />\n</head>`);
+    }
+  };
+
+  if (options.title) {
+    const escapedTitle = options.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    updatedHtml = updatedHtml.replace(/<title>[^<]*<\/title>/i, `<title>${escapedTitle}</title>`);
+    replaceOrInsertMeta('property', 'og:title', options.title);
+    replaceOrInsertMeta('name', 'twitter:title', options.title);
+  }
+
+  if (options.description) {
+    replaceOrInsertMeta('name', 'description', options.description);
+    replaceOrInsertMeta('property', 'og:description', options.description);
+    replaceOrInsertMeta('name', 'twitter:description', options.description);
+  }
+
+  if (absoluteImage) {
+    replaceOrInsertMeta('property', 'og:image', absoluteImage);
+    replaceOrInsertMeta('name', 'twitter:image', absoluteImage);
+  }
+
+  if (options.url) {
+    replaceOrInsertMeta('property', 'og:url', options.url);
+    replaceOrInsertMeta('name', 'twitter:url', options.url);
+  }
+
+  if (options.type) {
+    replaceOrInsertMeta('property', 'og:type', options.type);
+  }
+
+  replaceOrInsertMeta('name', 'twitter:card', 'summary_large_image');
+
+  return updatedHtml;
+}
