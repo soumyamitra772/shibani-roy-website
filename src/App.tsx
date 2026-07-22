@@ -8,6 +8,7 @@ import ContactView from './components/ContactView';
 import AdminView from './components/AdminView';
 import { dbService, isSupabaseConfigured, supabase } from './services/db';
 import { BlogPost, SiteContent } from './types';
+import { updateMetaTags, stripMarkdown } from './utils/seo';
 import { Loader } from 'lucide-react';
 
 interface RouteState {
@@ -114,7 +115,67 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // 4. Global Logout
+  // 4. Dynamic Open Graph & Meta Tag Updates
+  useEffect(() => {
+    if (route.page === 'blog-post' && route.param) {
+      const post = blogPosts.find((p) => p.slug === route.param);
+      if (post) {
+        const plainTextExcerpt = stripMarkdown(post.content).slice(0, 160);
+        updateMetaTags({
+          title: `${post.title} | Shibani Roy`,
+          description: plainTextExcerpt || 'Read this article by Shibani Roy.',
+          image: post.feature_image_url || siteContent.hero_image_url,
+          url: `https://shibani-roy-website.vercel.app/#/blog/${post.slug}`,
+          type: 'article',
+        });
+        return;
+      }
+    }
+
+    if (route.page === 'about') {
+      updateMetaTags({
+        title: 'About | Shibani Roy',
+        description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
+        image: siteContent.about_image_url || siteContent.hero_image_url,
+        url: 'https://shibani-roy-website.vercel.app/#/about',
+        type: 'website',
+      });
+      return;
+    }
+
+    if (route.page === 'blog') {
+      updateMetaTags({
+        title: 'Blog & Journals | Shibani Roy',
+        description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
+        image: siteContent.hero_image_url,
+        url: 'https://shibani-roy-website.vercel.app/#/blog',
+        type: 'website',
+      });
+      return;
+    }
+
+    if (route.page === 'contact') {
+      updateMetaTags({
+        title: 'Contact | Shibani Roy',
+        description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
+        image: siteContent.hero_image_url,
+        url: 'https://shibani-roy-website.vercel.app/#/contact',
+        type: 'website',
+      });
+      return;
+    }
+
+    // Default / Home page (route.page === 'home')
+    updateMetaTags({
+      title: "Shibani Roy | India's First Virtual AI Influencer",
+      description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
+      image: siteContent.hero_image_url,
+      url: 'https://shibani-roy-website.vercel.app/',
+      type: 'website',
+    });
+  }, [route, blogPosts, siteContent]);
+
+  // 5. Global Logout
   const handleLogout = async () => {
     localStorage.removeItem('shibani_admin_session');
     if (isSupabaseConfigured && supabase) {
