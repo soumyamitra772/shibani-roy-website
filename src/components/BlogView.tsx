@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BlogPost } from '../types';
+import { stripMarkdown } from '../utils/seo';
 import { renderMarkdown } from './AboutView';
 import { ArrowLeft, Calendar, User, Clock, ChevronLeft, ChevronRight, Search, Share2, Check, Sparkles } from 'lucide-react';
 
@@ -121,6 +122,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
             src={post.feature_image_url || 'https://picsum.photos/seed/full/1200/800'}
             alt={post.title}
             referrerPolicy="no-referrer"
+            loading="lazy"
             className="h-full w-full object-cover"
           />
         </div>
@@ -136,7 +138,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
             <img
               src="/images/shibani_avatar_1784621038657.jpg"
               alt="Shibani Roy Portrait"
-              referrerPolicy="no-referrer"
+              loading="lazy"
               className="h-16 w-16 rounded-full object-cover border-2 border-brand-200 shadow-md"
             />
             <div className="space-y-1 text-center sm:text-left">
@@ -165,6 +167,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
                       src={p.feature_image_url || 'https://picsum.photos/seed/rec/400/300'}
                       alt={p.title}
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
@@ -238,6 +241,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
                 src={post.feature_image_url || 'https://picsum.photos/seed/placeholder/800/600'}
                 alt={post.title}
                 referrerPolicy="no-referrer"
+                loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-550 group-hover:scale-105"
               />
             </div>
@@ -260,7 +264,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
 
             {/* Content Preview / Excerpt */}
             <p className="text-zinc-700 text-xs sm:text-sm mt-2 line-clamp-3 leading-relaxed flex-grow text-left">
-              {post.content.replace(/#+\s/g, '').slice(0, 140)}...
+              {stripMarkdown(post.content).slice(0, 140)}...
             </p>
 
             {/* Link Footer */}

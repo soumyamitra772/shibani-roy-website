@@ -24,6 +24,7 @@ export default function Footer({ siteContent }: FooterProps) {
                 <img 
                   src={siteContent?.logo_url || "/images/shibani_logo_small_r_1784631811197.jpg"} 
                   alt="SR emblem" 
+                  loading="lazy"
                   className="h-full w-full object-cover" 
                 />
               </div>

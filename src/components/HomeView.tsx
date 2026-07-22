@@ -1,5 +1,6 @@
 import React from 'react';
 import { BlogPost, SiteContent } from '../types';
+import { stripMarkdown } from '../utils/seo';
 import { MessageSquare, ArrowRight, Calendar, User, Sparkles, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface HomeViewProps {
@@ -37,7 +38,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                     <img
                       src={siteContent.logo_url || "/images/shibani_logo_small_r_1784631811197.jpg"}
                       alt="Shibani Roy Full Logo"
-                      referrerPolicy="no-referrer"
+                      loading="lazy"
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -110,7 +111,6 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                 <img
                   src={siteContent.hero_image_url || '/images/shibani_hero_1784621056791.jpg'}
                   alt="Shibani Roy virtual AI model portrait"
-                  referrerPolicy="no-referrer"
                   className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                 />
               </div>
@@ -168,7 +168,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
               <img
                 src={siteContent.avatar_image_url || '/images/shibani_avatar_1784621038657.jpg'}
                 alt="Shibani Roy portrait"
-                referrerPolicy="no-referrer"
+                loading="lazy"
                 className="h-full w-full object-cover rounded-full"
               />
             </div>
@@ -233,6 +233,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                   src={post.feature_image_url || 'https://picsum.photos/seed/placeholder/800/600'}
                   alt={post.title}
                   referrerPolicy="no-referrer"
+                  loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
@@ -255,7 +256,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
 
               {/* Excerpt */}
               <p className="text-zinc-700 text-xs sm:text-sm mt-2 line-clamp-3 leading-relaxed flex-grow text-left">
-                {post.content.replace(/#+\s/g, '').slice(0, 140)}...
+                {stripMarkdown(post.content).slice(0, 140)}...
               </p>
 
               {/* Read More link */}

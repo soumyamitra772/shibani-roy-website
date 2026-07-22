@@ -105,7 +105,7 @@ export default function AboutView({ siteContent }: AboutViewProps) {
         <img
           src={siteContent.about_image_url || siteContent.hero_image_url || '/images/shibani_hero_1784621056791.jpg'}
           alt="Shibani Roy digital scene"
-          referrerPolicy="no-referrer"
+          loading="lazy"
           className="h-full w-full object-cover opacity-90 transition-transform duration-700 hover:scale-103"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-950/60 via-transparent to-transparent"></div>
