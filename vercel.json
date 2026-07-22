@@ -1,9 +1,23 @@
 {
   "version": 2,
-  "rewrites": [
+  "outputDirectory": "dist",
+  "builds": [
     {
-      "source": "/((?!images/|assets/|favicon|.*\\.(?:jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot|json|webp)).*)",
-      "destination": "/api/index"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    { "src": "/images/(.*)", "dest": "/images/$1" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "^/blog/(.+)$", "dest": "/api/index" },
+    { "src": "^/about$", "dest": "/api/index" },
+    { "src": "^/blog$", "dest": "/api/index" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
