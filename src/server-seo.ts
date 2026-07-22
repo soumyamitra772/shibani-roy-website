@@ -1,1 +1,1 @@
-export * from '../api/server-seo';
+export * from '../api/index';
