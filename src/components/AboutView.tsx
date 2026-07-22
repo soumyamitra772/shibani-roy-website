@@ -7,6 +7,62 @@ interface AboutViewProps {
 }
 
 // Lightweight, robust JSX-based Markdown renderer to avoid library weight
+export function parseInlineMarkdown(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // Split on bold (** or __), italic (* or _), code (`), link ([text](url))
+  const regex = /(\*\*[\s\S]+?\*\*|__[\s\S]+?__|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^\*\n]+?\*|_[^\_\n]+?_)/g;
+  const parts = text.split(regex);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+
+    // Bold **text** or __text__
+    if ((part.startsWith('**') && part.endsWith('**') && part.length >= 4) ||
+        (part.startsWith('__') && part.endsWith('__') && part.length >= 4)) {
+      const inner = part.slice(2, -2);
+      return <strong key={i} className="font-bold text-zinc-900">{parseInlineMarkdown(inner)}</strong>;
+    }
+
+    // Italic *text* or _text_
+    if ((part.startsWith('*') && part.endsWith('*') && part.length >= 2) ||
+        (part.startsWith('_') && part.endsWith('_') && part.length >= 2)) {
+      const inner = part.slice(1, -1);
+      return <em key={i} className="italic text-zinc-800">{parseInlineMarkdown(inner)}</em>;
+    }
+
+    // Code `text`
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      return (
+        <code key={i} className="rounded bg-brand-50 border border-brand-200 px-1.5 py-0.5 text-xs font-mono text-brand-900">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+
+    // Link [text](url)
+    if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (linkMatch) {
+        const [, linkText, url] = linkMatch;
+        return (
+          <a
+            key={i}
+            href={url}
+            target={url.startsWith('http') ? '_blank' : undefined}
+            rel={url.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="text-brand-600 underline font-semibold hover:text-brand-800 transition"
+          >
+            {parseInlineMarkdown(linkText)}
+          </a>
+        );
+      }
+    }
+
+    return part;
+  });
+}
+
 export function renderMarkdown(text: string) {
   if (!text) return null;
   const blocks = text.split('\n\n');
@@ -19,22 +75,22 @@ export function renderMarkdown(text: string) {
     if (trimmed.startsWith('### ')) {
       return (
         <h3 key={idx} className="font-display text-xl font-bold text-brand-900 mt-8 mb-3 flex items-center gap-2 text-left">
-          <Sparkles className="h-4 w-4 text-brand-600 animate-pulse" />
-          {trimmed.slice(4)}
+          <Sparkles className="h-4 w-4 text-brand-600 animate-pulse shrink-0" />
+          <span>{parseInlineMarkdown(trimmed.slice(4))}</span>
         </h3>
       );
     }
     if (trimmed.startsWith('## ')) {
       return (
         <h2 key={idx} className="font-display text-2xl font-bold text-brand-900 mt-10 mb-4 border-b border-brand-100 pb-2 text-left">
-          {trimmed.slice(3)}
+          {parseInlineMarkdown(trimmed.slice(3))}
         </h2>
       );
     }
     if (trimmed.startsWith('# ')) {
       return (
         <h1 key={idx} className="font-display text-3xl font-extrabold text-brand-900 mt-12 mb-6 text-left">
-          {trimmed.slice(2)}
+          {parseInlineMarkdown(trimmed.slice(2))}
         </h1>
       );
     }
@@ -43,46 +99,52 @@ export function renderMarkdown(text: string) {
     if (trimmed.startsWith('> ')) {
       return (
         <blockquote key={idx} className="border-l-4 border-brand-500 bg-brand-50/50 px-5 py-4 my-6 rounded-r-2xl italic text-brand-950 font-medium text-left">
-          {trimmed.replace(/^>\s*/, '')}
+          {parseInlineMarkdown(trimmed.replace(/^>\s*/, ''))}
         </blockquote>
       );
     }
 
     // Unordered List Items
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-      const items = trimmed.split('\n').map(line => line.replace(/^[-*]\s*/, ''));
+      const items = trimmed.split('\n').filter(line => line.trim().startsWith('- ') || line.trim().startsWith('* ')).map(line => line.trim().replace(/^[-*]\s*/, ''));
       return (
         <ul key={idx} className="space-y-2.5 my-4 text-left">
           {items.map((item, itemIdx) => (
-            <li key={itemIdx} className="flex items-start gap-2 text-zinc-700">
+            <li key={itemIdx} className="flex items-start gap-2.5 text-zinc-700">
               <span className="text-brand-600 mt-2 h-1.5 w-1.5 rounded-full shrink-0 bg-brand-600" />
-              <span>{item}</span>
+              <span className="leading-relaxed">{parseInlineMarkdown(item)}</span>
             </li>
           ))}
         </ul>
       );
     }
 
-    // Default Paragraph with simple inline bold parser (**text**)
+    // Ordered List Items
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items = trimmed.split('\n').filter(line => /^\d+\.\s/.test(line.trim())).map(line => line.trim().replace(/^\d+\.\s*/, ''));
+      return (
+        <ol key={idx} className="space-y-2.5 my-4 text-left list-decimal list-inside text-zinc-700">
+          {items.map((item, itemIdx) => (
+            <li key={itemIdx} className="leading-relaxed">
+              <span>{parseInlineMarkdown(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+    }
+
+    // Default Paragraph with inline formatting and line break support
+    const lines = trimmed.split('\n');
     return (
       <p key={idx} className="text-zinc-700 leading-relaxed text-base mb-5 text-left">
-        {parseInlineMarkdown(trimmed)}
+        {lines.map((line, lIdx) => (
+          <React.Fragment key={lIdx}>
+            {parseInlineMarkdown(line)}
+            {lIdx < lines.length - 1 && <br />}
+          </React.Fragment>
+        ))}
       </p>
     );
-  });
-}
-
-// Simple inline bold and italic parsing
-function parseInlineMarkdown(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-bold text-brand-900">{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith('*') && part.endsWith('*')) {
-      return <em key={i} className="italic text-brand-700">{part.slice(1, -1)}</em>;
-    }
-    return part;
   });
 }
 
