@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { isSupabaseConfigured } from '../services/db';
 import { SiteContent } from '../types';
+import { navigate } from '../utils/navigation';
 import { Sparkles, Menu, X, Database, Info, ExternalLink, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface HeaderProps {
@@ -16,14 +17,14 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
   const [showStatusModal, setShowStatusModal] = useState(false);
 
   const navItems = [
-    { label: 'Home', id: 'home', hash: '#/' },
-    { label: 'About', id: 'about', hash: '#/about' },
-    { label: 'Blog', id: 'blog', hash: '#/blog' },
-    { label: 'Contact', id: 'contact', hash: '#/contact' },
+    { label: 'Home', id: 'home', path: '/' },
+    { label: 'About', id: 'about', path: '/about' },
+    { label: 'Blog', id: 'blog', path: '/blog' },
+    { label: 'Contact', id: 'contact', path: '/contact' },
   ];
 
-  const navigateTo = (hash: string) => {
-    window.location.hash = hash;
+  const navigateTo = (path: string) => {
+    navigate(path);
     setIsMobileMenuOpen(false);
   };
 
@@ -39,7 +40,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
         <div className="mx-auto flex max-w-7xl h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <div 
-            onClick={() => navigateTo('#/')} 
+            onClick={() => navigateTo('/')} 
             className="flex cursor-pointer items-center space-x-3 group animate-fade-in"
           >
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-brand-300 bg-brand-50 shadow-md shrink-0 transition-transform group-hover:scale-105 duration-300 ring-2 ring-brand-100/40">
@@ -65,7 +66,11 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
             {navItems.map((item) => (
               <a
                 key={item.id}
-                href={item.hash}
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateTo(item.path);
+                }}
                 className={`text-sm font-medium transition-all hover:text-brand-700 relative py-1.5 ${
                   isCurrent(item.id) 
                     ? 'text-brand-700 font-bold border-b-2 border-brand-500' 
@@ -114,7 +119,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
             {isAdminLoggedIn ? (
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => navigateTo('#/admin')}
+                  onClick={() => navigateTo('/admin')}
                   className="rounded-full bg-brand-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-700 transition shadow-sm"
                 >
                   Admin Panel
@@ -128,7 +133,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
               </div>
             ) : (
               <button
-                onClick={() => navigateTo('#/admin')}
+                onClick={() => navigateTo('/admin')}
                 className="rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-semibold text-brand-900 hover:bg-brand-50 transition shadow-sm"
               >
                 Admin Login
@@ -164,8 +169,11 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
             {navItems.map((item) => (
               <a
                 key={item.id}
-                href={item.hash}
-                onClick={() => setIsMobileMenuOpen(false)}
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateTo(item.path);
+                }}
                 className={`block text-base font-medium py-2 ${
                   isCurrent(item.id) ? 'text-brand-700 font-bold' : 'text-zinc-600'
                 }`}
@@ -177,7 +185,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
               {isAdminLoggedIn ? (
                 <>
                   <button
-                    onClick={() => navigateTo('#/admin')}
+                    onClick={() => navigateTo('/admin')}
                     className="w-full text-center rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
                   >
                     Admin Panel
@@ -194,7 +202,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
                 </>
               ) : (
                 <button
-                  onClick={() => navigateTo('#/admin')}
+                  onClick={() => navigateTo('/admin')}
                   className="w-full text-center rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900"
                 >
                   Admin Login

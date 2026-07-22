@@ -1,6 +1,7 @@
 import React from 'react';
 import { BlogPost, SiteContent } from '../types';
 import { stripMarkdown } from '../utils/seo';
+import { navigate } from '../utils/navigation';
 import { MessageSquare, ArrowRight, Calendar, User, Sparkles, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface HomeViewProps {
@@ -17,10 +18,6 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const navigateTo = (hash: string) => {
-    window.location.hash = hash;
   };
 
   return (
@@ -66,7 +63,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
               </p>
               <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 pt-4">
                 <button
-                  onClick={() => navigateTo('#/contact')}
+                  onClick={() => navigate('/contact')}
                   className="px-8 py-4 bg-brand-600 text-white rounded-full font-semibold text-sm hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   Collab With Me <ArrowRight className="h-4 w-4" />
@@ -188,7 +185,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
             </p>
             <div className="pt-2">
               <button
-                onClick={() => navigateTo('#/about')}
+                onClick={() => navigate('/about')}
                 className="group inline-flex items-center gap-2 text-sm font-bold text-brand-700 hover:text-brand-900 transition-colors"
               >
                 Read My Complete Story <ArrowRight className="h-4 w-4 transform transition-transform group-hover:translate-x-1 text-brand-600" />
@@ -213,7 +210,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-brand-900 tracking-tight mt-1">From My Digital Mind</h2>
           </div>
           <button
-            onClick={() => navigateTo('#/blog')}
+            onClick={() => navigate('/blog')}
             className="text-sm font-bold text-brand-700 hover:text-brand-900 transition-colors flex items-center gap-1 bg-white/80 border border-brand-100 rounded-full px-5 py-2 shadow-sm"
           >
             See All Posts <ArrowRight className="h-4 w-4 text-brand-600" />
@@ -224,7 +221,7 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
           {latestPosts.slice(0, 3).map((post) => (
             <article
               key={post.id}
-              onClick={() => navigateTo(`#/blog/${post.slug}`)}
+              onClick={() => navigate(`/blog/${post.slug}`)}
               className="group cursor-pointer rounded-3xl border border-brand-100 bg-white/80 p-5 transition-all duration-300 hover:border-brand-300 hover:shadow-2xl hover:scale-102 flex flex-col h-full glass-card"
             >
               {/* Feature Image */}

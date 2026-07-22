@@ -9,6 +9,7 @@ import AdminView from './components/AdminView';
 import { dbService, isSupabaseConfigured, supabase } from './services/db';
 import { BlogPost, SiteContent } from './types';
 import { updateMetaTags, stripMarkdown } from './utils/seo';
+import { navigate } from './utils/navigation';
 import { Loader } from 'lucide-react';
 
 interface RouteState {
@@ -89,8 +90,15 @@ export default function App() {
   // 3. Router Handler (Supports Clean Path & Hash routing)
   useEffect(() => {
     const handleRouteChange = () => {
-      const pathname = window.location.pathname;
+      let pathname = window.location.pathname;
       const hash = window.location.hash || '';
+
+      // Auto-migrate legacy hash URLs like #/blog/slug -> /blog/slug in browser address bar
+      if (hash.startsWith('#/')) {
+        const hashPath = hash.replace(/^#/, '');
+        window.history.replaceState({}, '', hashPath);
+        pathname = hashPath;
+      }
 
       if (pathname.startsWith('/blog/')) {
         const slug = pathname.replace('/blog/', '').replace(/\/$/, '');
@@ -117,22 +125,7 @@ export default function App() {
         return;
       }
 
-      // Hash Fallback
-      if (hash.startsWith('#/blog/')) {
-        const slug = hash.replace('#/blog/', '');
-        setRoute({ page: 'blog-post', param: slug });
-      } else if (hash === '#/about') {
-        setRoute({ page: 'about', param: '' });
-      } else if (hash === '#/blog') {
-        setRoute({ page: 'blog', param: '' });
-      } else if (hash === '#/contact') {
-        setRoute({ page: 'contact', param: '' });
-      } else if (hash === '#/admin') {
-        setRoute({ page: 'admin', param: '' });
-      } else {
-        setRoute({ page: 'home', param: '' });
-      }
-
+      setRoute({ page: 'home', param: '' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -221,10 +214,10 @@ export default function App() {
       }
     }
     setIsAdminLoggedIn(false);
-    window.location.hash = '#/';
+    navigate('/');
   };
 
-  // 5. Render Active View Router
+  // 6. Render Active View Router
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -241,7 +234,7 @@ export default function App() {
           <HomeView
             siteContent={siteContent}
             latestPosts={blogPosts}
-            setRoute={(r) => { window.location.hash = r.page === 'home' ? '#/' : `#/${r.page}`; }}
+            setRoute={(r) => { navigate(r.page === 'home' ? '/' : `/${r.page}`); }}
           />
         );
       case 'about':
@@ -251,7 +244,7 @@ export default function App() {
           <BlogView
             posts={blogPosts}
             selectedSlug=""
-            setRoute={(r) => { window.location.hash = `#/${r.page}`; }}
+            setRoute={(r) => { navigate(`/${r.page}`); }}
           />
         );
       case 'blog-post':
@@ -259,7 +252,7 @@ export default function App() {
           <BlogView
             posts={blogPosts}
             selectedSlug={route.param}
-            setRoute={(r) => { window.location.hash = `#/${r.page}`; }}
+            setRoute={(r) => { navigate(`/${r.page}`); }}
           />
         );
       case 'contact':

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SiteContent } from '../types';
+import { navigate } from '../utils/navigation';
 import { Sparkles, Heart, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface FooterProps {
@@ -8,10 +9,6 @@ interface FooterProps {
 
 export default function Footer({ siteContent }: FooterProps) {
   const currentYear = new Date().getFullYear();
-
-  const navigateTo = (hash: string) => {
-    window.location.hash = hash;
-  };
 
   return (
     <footer id="app-footer" className="border-t border-brand-100 bg-white/70 py-12 backdrop-blur-md">
@@ -55,11 +52,11 @@ export default function Footer({ siteContent }: FooterProps) {
 
           {/* Links Section */}
           <div className="flex justify-center space-x-6 text-sm font-semibold text-zinc-600">
-            <a onClick={() => navigateTo('#/')} className="cursor-pointer hover:text-brand-600 transition">Home</a>
-            <a onClick={() => navigateTo('#/about')} className="cursor-pointer hover:text-brand-600 transition">About</a>
-            <a onClick={() => navigateTo('#/blog')} className="cursor-pointer hover:text-brand-600 transition">Blog</a>
-            <a onClick={() => navigateTo('#/contact')} className="cursor-pointer hover:text-brand-600 transition">Contact</a>
-            <a onClick={() => navigateTo('#/admin')} className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</a>
+            <a onClick={() => navigate('/')} className="cursor-pointer hover:text-brand-600 transition">Home</a>
+            <a onClick={() => navigate('/about')} className="cursor-pointer hover:text-brand-600 transition">About</a>
+            <a onClick={() => navigate('/blog')} className="cursor-pointer hover:text-brand-600 transition">Blog</a>
+            <a onClick={() => navigate('/contact')} className="cursor-pointer hover:text-brand-600 transition">Contact</a>
+            <a onClick={() => navigate('/admin')} className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</a>
           </div>
 
           {/* Copyright Section */}

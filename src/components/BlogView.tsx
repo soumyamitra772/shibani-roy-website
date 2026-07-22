@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BlogPost } from '../types';
 import { stripMarkdown } from '../utils/seo';
 import { renderMarkdown } from './AboutView';
+import { navigate } from '../utils/navigation';
 import { ArrowLeft, Calendar, User, Clock, ChevronLeft, ChevronRight, Search, Share2, Check, Sparkles } from 'lucide-react';
 
 interface BlogViewProps {
@@ -49,7 +50,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
           <h2 className="font-display text-2xl font-bold text-brand-900">Article Not Found</h2>
           <p className="text-zinc-700">The article you are looking for might have been moved or deleted.</p>
           <button
-            onClick={() => { window.location.hash = '#/blog'; }}
+            onClick={() => navigate('/blog')}
             className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 transition"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Blog
@@ -78,7 +79,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
         {/* Back navigation */}
         <div className="flex justify-between items-center">
           <button
-            onClick={() => { window.location.hash = '#/blog'; }}
+            onClick={() => navigate('/blog')}
             className="group inline-flex items-center gap-2 text-sm font-bold text-brand-700 hover:text-brand-900 transition"
           >
             <ArrowLeft className="h-4 w-4 transform transition-transform group-hover:-translate-x-0.5" /> Back to all stories
@@ -163,7 +164,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
               {recommendations.map(p => (
                 <article
                   key={p.id}
-                  onClick={() => { window.location.hash = `#/blog/${p.slug}`; }}
+                  onClick={() => navigate(`/blog/${p.slug}`)}
                   className="group cursor-pointer rounded-2xl border border-brand-100 bg-white/80 p-3.5 hover:border-brand-300 hover:shadow-xl hover:scale-102 transition-all duration-300 flex flex-col h-full shadow-sm"
                 >
                   <div className="aspect-video w-full rounded-xl overflow-hidden bg-brand-50 mb-3 border border-brand-100">
@@ -236,7 +237,7 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
         {currentPosts.map((post) => (
           <article
             key={post.id}
-            onClick={() => { window.location.hash = `#/blog/${post.slug}`; }}
+            onClick={() => navigate(`/blog/${post.slug}`)}
             className="group cursor-pointer rounded-3xl border border-brand-100 bg-white/80 p-5 transition-all duration-300 hover:border-brand-300 hover:shadow-2xl hover:scale-102 flex flex-col h-full animate-fade-in glass-card"
           >
             {/* Feature Image */}
