@@ -312,18 +312,29 @@ export const dbService = {
           .from('blog_posts')
           .select('*')
           .order('created_at', { ascending: false });
-        if (error) {
-          console.warn('Supabase getBlogPosts error, falling back to local posts:', error);
-          return getLocalBlogPosts();
+        if (!error && data && data.length > 0) {
+          localStorage.setItem('shibani_blog_posts', JSON.stringify(data));
+          return data;
         }
-        return data || [];
       } catch (err) {
-        console.warn('Supabase getBlogPosts exception, falling back to local posts:', err);
-        return getLocalBlogPosts();
+        console.warn('Supabase getBlogPosts exception:', err);
       }
-    } else {
-      return getLocalBlogPosts();
     }
+
+    try {
+      const res = await fetch('/api/blog-posts');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          localStorage.setItem('shibani_blog_posts', JSON.stringify(data));
+          return data;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API getBlogPosts failed, falling back to local posts:', err);
+    }
+
+    return getLocalBlogPosts();
   },
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
@@ -334,19 +345,33 @@ export const dbService = {
           .select('*')
           .eq('slug', slug)
           .maybeSingle();
-        if (error || !data) {
-          return getLocalBlogPostBySlug(slug);
+        if (!error && data) {
+          return data;
         }
-        return data;
       } catch (err) {
-        return getLocalBlogPostBySlug(slug);
+        console.warn('Supabase getBlogPostBySlug exception:', err);
       }
-    } else {
-      return getLocalBlogPostBySlug(slug);
     }
+
+    try {
+      const res = await fetch('/api/blog-posts');
+      if (res.ok) {
+        const posts: BlogPost[] = await res.json();
+        const found = posts.find(p => p.slug === slug) ||
+          posts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+          posts.find(p => slug.includes(p.slug) || p.slug.includes(slug));
+        if (found) return found;
+      }
+    } catch (err) {
+      console.warn('Server API getBlogPostBySlug failed:', err);
+    }
+
+    return getLocalBlogPostBySlug(slug);
   },
 
   async createBlogPost(post: Omit<BlogPost, 'id' | 'created_at'>): Promise<BlogPost> {
+    let result: BlogPost | null = null;
+
     if (supabase) {
       try {
         const newPost = {
@@ -358,21 +383,35 @@ export const dbService = {
           .insert([newPost])
           .select()
           .single();
-        if (error) {
-          console.warn('Supabase createBlogPost error, falling back to local storage:', error);
-          return createLocalBlogPost(post);
+        if (!error && data) {
+          result = data;
         }
-        return data;
       } catch (err) {
-        console.warn('Supabase createBlogPost exception, falling back to local storage:', err);
-        return createLocalBlogPost(post);
+        console.warn('Supabase createBlogPost exception:', err);
       }
-    } else {
-      return createLocalBlogPost(post);
     }
+
+    try {
+      const res = await fetch('/api/blog-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        result = data;
+      }
+    } catch (err) {
+      console.warn('Server API createBlogPost failed:', err);
+    }
+
+    const localCreated = createLocalBlogPost(post);
+    return result || localCreated;
   },
 
   async updateBlogPost(id: string, postUpdates: Partial<BlogPost>): Promise<BlogPost> {
+    let result: BlogPost | null = null;
+
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -381,38 +420,51 @@ export const dbService = {
           .eq('id', id)
           .select()
           .single();
-        if (error) {
-          console.warn('Supabase updateBlogPost error, falling back to local storage:', error);
-          return updateLocalBlogPost(id, postUpdates);
+        if (!error && data) {
+          result = data;
         }
-        return data;
       } catch (err) {
-        console.warn('Supabase updateBlogPost exception, falling back to local storage:', err);
-        return updateLocalBlogPost(id, postUpdates);
+        console.warn('Supabase updateBlogPost exception:', err);
       }
-    } else {
-      return updateLocalBlogPost(id, postUpdates);
     }
+
+    try {
+      const res = await fetch(`/api/blog-posts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(postUpdates)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        result = data;
+      }
+    } catch (err) {
+      console.warn('Server API updateBlogPost failed:', err);
+    }
+
+    const localUpdated = updateLocalBlogPost(id, postUpdates);
+    return result || localUpdated;
   },
 
   async deleteBlogPost(id: string): Promise<void> {
     if (supabase) {
       try {
-        const { error } = await supabase
+        await supabase
           .from('blog_posts')
           .delete()
           .eq('id', id);
-        if (error) {
-          console.warn('Supabase deleteBlogPost error, falling back to local storage:', error);
-          deleteLocalBlogPost(id);
-        }
       } catch (err) {
-        console.warn('Supabase deleteBlogPost exception, falling back to local storage:', err);
-        deleteLocalBlogPost(id);
+        console.warn('Supabase deleteBlogPost exception:', err);
       }
-    } else {
-      deleteLocalBlogPost(id);
     }
+
+    try {
+      await fetch(`/api/blog-posts/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Server API deleteBlogPost failed:', err);
+    }
+
+    deleteLocalBlogPost(id);
   },
 
   // --- SITE CONTENT ---
@@ -422,36 +474,34 @@ export const dbService = {
         const { data, error } = await supabase
           .from('site_content')
           .select('*');
-        
-        if (error) {
-          console.warn('Supabase getSiteContent error, falling back to local content:', error);
-          return getLocalSiteContent();
-        }
-        if (data && data.length > 0) {
+        if (!error && data && data.length > 0) {
+          localStorage.setItem('shibani_site_content', JSON.stringify(data[0]));
           return data[0];
         }
-        // If table is empty, seed it with initial content on the real Supabase database!
-        const { data: seeded, error: seedError } = await supabase
-          .from('site_content')
-          .insert([SEED_SITE_CONTENT])
-          .select()
-          .single();
-        
-        if (seedError) {
-          console.warn('Supabase seed site_content error, falling back to local:', seedError);
-          return getLocalSiteContent();
-        }
-        return seeded;
       } catch (err) {
-        console.warn('Supabase getSiteContent exception, falling back to local content:', err);
-        return getLocalSiteContent();
+        console.warn('Supabase getSiteContent exception:', err);
       }
-    } else {
-      return getLocalSiteContent();
     }
+
+    try {
+      const res = await fetch('/api/site-content');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Object.keys(data).length > 0) {
+          localStorage.setItem('shibani_site_content', JSON.stringify(data));
+          return data;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API getSiteContent failed, falling back to local content:', err);
+    }
+
+    return getLocalSiteContent();
   },
 
   async updateSiteContent(updates: Partial<SiteContent>): Promise<SiteContent> {
+    let result: SiteContent | null = null;
+
     if (supabase) {
       try {
         const { data } = await supabase.from('site_content').select('id');
@@ -462,34 +512,48 @@ export const dbService = {
             .eq('id', data[0].id)
             .select()
             .single();
-          if (error) {
-            console.warn('Supabase updateSiteContent error, falling back to local:', error);
-            return updateLocalSiteContent(updates);
+          if (!error && updated) {
+            result = updated;
           }
-          return updated;
         } else {
           const { data: created, error } = await supabase
             .from('site_content')
             .insert([{ ...SEED_SITE_CONTENT, ...updates }])
             .select()
             .single();
-          if (error) {
-            console.warn('Supabase createSiteContent error, falling back to local:', error);
-            return updateLocalSiteContent(updates);
+          if (!error && created) {
+            result = created;
           }
-          return created;
         }
       } catch (err) {
-        console.warn('Supabase updateSiteContent exception, falling back to local:', err);
-        return updateLocalSiteContent(updates);
+        console.warn('Supabase updateSiteContent exception:', err);
       }
-    } else {
-      return updateLocalSiteContent(updates);
     }
+
+    try {
+      const res = await fetch('/api/site-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        result = data;
+      }
+    } catch (err) {
+      console.warn('Server API updateSiteContent failed:', err);
+    }
+
+    const localUpdated = updateLocalSiteContent(updates);
+    const finalContent = result || localUpdated;
+    localStorage.setItem('shibani_site_content', JSON.stringify(finalContent));
+    return finalContent;
   },
 
   // --- CONTACT MESSAGES ---
   async submitContactMessage(message: Omit<ContactMessage, 'id' | 'created_at'>): Promise<ContactMessage> {
+    let result: ContactMessage | null = null;
+
     if (supabase) {
       try {
         const newMsg = {
@@ -501,18 +565,30 @@ export const dbService = {
           .insert([newMsg])
           .select()
           .single();
-        if (error) {
-          console.warn('Supabase submitContactMessage error, falling back to local:', error);
-          return submitLocalContactMessage(message);
+        if (!error && data) {
+          result = data;
         }
-        return data;
       } catch (err) {
-        console.warn('Supabase submitContactMessage exception, falling back to local:', err);
-        return submitLocalContactMessage(message);
+        console.warn('Supabase submitContactMessage exception:', err);
       }
-    } else {
-      return submitLocalContactMessage(message);
     }
+
+    try {
+      const res = await fetch('/api/contact-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(message)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        result = data;
+      }
+    } catch (err) {
+      console.warn('Server API submitContactMessage failed:', err);
+    }
+
+    const localMsg = submitLocalContactMessage(message);
+    return result || localMsg;
   },
 
   async getContactMessages(): Promise<ContactMessage[]> {
@@ -522,38 +598,48 @@ export const dbService = {
           .from('contact_messages')
           .select('*')
           .order('created_at', { ascending: false });
-        if (error) {
-          console.warn('Supabase getContactMessages error, falling back to local:', error);
-          return getLocalContactMessages();
+        if (!error && data) {
+          return data;
         }
-        return data || [];
       } catch (err) {
-        console.warn('Supabase getContactMessages exception, falling back to local:', err);
-        return getLocalContactMessages();
+        console.warn('Supabase getContactMessages exception:', err);
       }
-    } else {
-      return getLocalContactMessages();
     }
+
+    try {
+      const res = await fetch('/api/contact-messages');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          return data;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API getContactMessages failed:', err);
+    }
+
+    return getLocalContactMessages();
   },
 
   async deleteContactMessage(id: string): Promise<void> {
     if (supabase) {
       try {
-        const { error } = await supabase
+        await supabase
           .from('contact_messages')
           .delete()
           .eq('id', id);
-        if (error) {
-          console.warn('Supabase deleteContactMessage error, falling back to local:', error);
-          deleteLocalContactMessage(id);
-        }
       } catch (err) {
-        console.warn('Supabase deleteContactMessage exception, falling back to local:', err);
-        deleteLocalContactMessage(id);
+        console.warn('Supabase deleteContactMessage exception:', err);
       }
-    } else {
-      deleteLocalContactMessage(id);
     }
+
+    try {
+      await fetch(`/api/contact-messages/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Server API deleteContactMessage failed:', err);
+    }
+
+    deleteLocalContactMessage(id);
   },
 
   // --- IMAGE UPLOAD SIMULATION ---

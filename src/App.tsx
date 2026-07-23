@@ -73,6 +73,15 @@ export default function App() {
     loadAppData();
     checkAuthSession();
 
+    const handleSyncOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadAppData();
+      }
+    };
+
+    window.addEventListener('focus', handleSyncOnFocus);
+    document.addEventListener('visibilitychange', handleSyncOnFocus);
+
     // Listen for Auth changes in Supabase
     if (isSupabaseConfigured && supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -83,8 +92,17 @@ export default function App() {
           setIsAdminLoggedIn(localSession === 'true');
         }
       });
-      return () => subscription.unsubscribe();
+      return () => {
+        subscription.unsubscribe();
+        window.removeEventListener('focus', handleSyncOnFocus);
+        document.removeEventListener('visibilitychange', handleSyncOnFocus);
+      };
     }
+
+    return () => {
+      window.removeEventListener('focus', handleSyncOnFocus);
+      document.removeEventListener('visibilitychange', handleSyncOnFocus);
+    };
   }, []);
 
   // 3. Router Handler (Supports Clean Path & Hash routing)
