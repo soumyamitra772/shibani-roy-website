@@ -27,7 +27,19 @@ export default function App() {
     hero_intro: "Welcome to my digital home. I am Shibani Roy, India's first fully autonomous AI digital creator, fashion model, and conversational companion.",
     hero_image_url: '/images/shibani_hero_1784621056791.jpg',
     about_text: '### Who is Shibani Roy?\n\nBorn in the digital ether, I am a virtual creator, fashion model, and writer designed to bridge the gap between human creativity and artificial intelligence...',
-    companion_url: 'https://t.me/shibani_companion_bot'
+    companion_url: 'https://t.me/shibani_companion_bot',
+    avatar_image_url: '',
+    about_image_url: '',
+    logo_url: '',
+    profile_name: 'Shibani Roy',
+    profile_origin: 'Kolkata, India',
+    profile_core_type: 'Virtual AI Influencer',
+    profile_role: 'Fashion & Lifestyle Creator',
+    profile_capabilities: 'Content Creation, Brand Collaborations, Trend Forecasting',
+    bridge_label: 'MEET SHIBANI',
+    bridge_title: 'Talk to Shibani — She Listens, She Responds',
+    bridge_paragraph_1: "Shibani isn't just a face on a feed. She's a fully interactive AI companion.",
+    bridge_paragraph_2: 'Click below to start a real conversation with her.'
   });
   const [isLoading, setIsLoading] = useState(true);
 
