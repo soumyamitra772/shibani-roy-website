@@ -587,7 +587,7 @@ export const dbService = {
       try {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `site/${fileName}`;
+        const filePath = `blog/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('shibani-assets')
