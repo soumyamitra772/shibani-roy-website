@@ -2,6 +2,16 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync } from 'fs';
 import path, { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
+import {
+  getServerSiteContent,
+  updateServerSiteContent,
+  getServerBlogPosts,
+  saveServerBlogPost,
+  deleteServerBlogPost,
+  getServerContactMessages,
+  saveServerContactMessage,
+  deleteServerContactMessage
+} from '../src/services/store';
 
 export interface MetaTagOptions {
   title?: string;
@@ -258,6 +268,9 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
   const origin = baseOrigin || DEFAULT_BASE_URL;
   const cleanPath = urlPath.split('?')[0].replace(/\/$/, '') || '/';
 
+  const siteContent = getServerSiteContent();
+  const blogPosts = getServerBlogPosts();
+
   // Check for article route: /blog/:slug
   if (cleanPath.startsWith('/blog/')) {
     const slug = cleanPath.replace('/blog/', '');
@@ -278,17 +291,17 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
 
     if (!post && slug) {
       const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
-      post = SEED_BLOG_POSTS.find(p => p.slug === slug) ||
-             SEED_BLOG_POSTS.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
-             SEED_BLOG_POSTS.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
+      post = blogPosts.find(p => p.slug === slug) ||
+             blogPosts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
+             blogPosts.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
     }
 
     if (post) {
       const plainTextExcerpt = stripMarkdown(post.content).slice(0, 160);
       return {
-        title: `${post.title} | Shibani Roy`,
+        title: `${post.title} | ${siteContent.profile_name || 'Shibani Roy'}`,
         description: plainTextExcerpt || 'Read this article by Shibani Roy.',
-        image: post.feature_image_url || SEED_SITE_CONTENT.hero_image_url,
+        image: post.feature_image_url || siteContent.hero_image_url,
         url: `${origin}/blog/${post.slug}`,
         type: 'article',
       };
@@ -297,9 +310,9 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
 
   if (cleanPath === '/about') {
     return {
-      title: 'About | Shibani Roy',
-      description: SEED_SITE_CONTENT.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
-      image: SEED_SITE_CONTENT.about_image_url || SEED_SITE_CONTENT.hero_image_url,
+      title: `About | ${siteContent.profile_name || 'Shibani Roy'}`,
+      description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
+      image: siteContent.about_image_url || siteContent.hero_image_url,
       url: `${origin}/about`,
       type: 'website',
     };
@@ -307,9 +320,9 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
 
   if (cleanPath === '/blog') {
     return {
-      title: 'Blog & Journals | Shibani Roy',
+      title: `Blog & Journals | ${siteContent.profile_name || 'Shibani Roy'}`,
       description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
-      image: SEED_SITE_CONTENT.hero_image_url,
+      image: siteContent.hero_image_url,
       url: `${origin}/blog`,
       type: 'website',
     };
@@ -317,9 +330,9 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
 
   if (cleanPath === '/contact') {
     return {
-      title: 'Contact | Shibani Roy',
+      title: `Contact | ${siteContent.profile_name || 'Shibani Roy'}`,
       description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
-      image: SEED_SITE_CONTENT.hero_image_url,
+      image: siteContent.hero_image_url,
       url: `${origin}/contact`,
       type: 'website',
     };
@@ -327,9 +340,9 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
 
   // Default Home Page Meta
   return {
-    title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
-    description: "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive. Launched in August 2025, she covers Indian fashion, culture, lifestyle and AI. Chat with her on the companion app.",
-    image: `${origin}/images/shibani_hero_1784621056791.jpg`,
+    title: `${siteContent.profile_name || 'Shibani Roy'} | ${siteContent.hero_tagline || "India's First Virtual AI Influencer & Creator"}`,
+    description: siteContent.hero_intro || "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
+    image: `${origin}${siteContent.hero_image_url.startsWith('/') ? siteContent.hero_image_url : '/' + siteContent.hero_image_url}`,
     url: `${origin}/`,
     type: 'website',
   };
@@ -373,7 +386,74 @@ function getRawHtml(): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const requestUrl = req.url || '/';
-    const ext = path.extname(requestUrl).toLowerCase();
+    const cleanUrl = requestUrl.split('?')[0];
+
+    // Parse JSON body if available
+    let body = req.body;
+    if (typeof body === 'string' && body.length > 0) {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        // Keep string if not valid JSON
+      }
+    }
+
+    // --- API ENDPOINTS ---
+    if (cleanUrl === '/api/health') {
+      return res.status(200).json({ status: 'ok' });
+    }
+
+    if (cleanUrl === '/api/site-content' || cleanUrl.startsWith('/api/site-content')) {
+      if (req.method === 'GET') {
+        const content = getServerSiteContent();
+        return res.status(200).json(content);
+      } else if (req.method === 'POST') {
+        const updated = updateServerSiteContent(body || {});
+        return res.status(200).json(updated);
+      }
+    }
+
+    if (cleanUrl === '/api/blog-posts' || cleanUrl.startsWith('/api/blog-posts')) {
+      const urlParts = cleanUrl.split('/').filter(Boolean);
+      const paramId = urlParts.length > 2 ? urlParts[2] : (req.query?.id as string);
+
+      if (req.method === 'GET') {
+        const posts = getServerBlogPosts();
+        return res.status(200).json(posts);
+      } else if (req.method === 'POST') {
+        const saved = saveServerBlogPost(body || { title: 'Untitled' });
+        return res.status(200).json(saved);
+      } else if (req.method === 'PUT') {
+        const saved = saveServerBlogPost({ ...(body || {}), id: paramId });
+        return res.status(200).json(saved);
+      } else if (req.method === 'DELETE') {
+        if (paramId) {
+          deleteServerBlogPost(paramId);
+        }
+        return res.status(200).json({ success: true });
+      }
+    }
+
+    if (cleanUrl === '/api/contact-messages' || cleanUrl.startsWith('/api/contact-messages')) {
+      const urlParts = cleanUrl.split('/').filter(Boolean);
+      const paramId = urlParts.length > 2 ? urlParts[2] : (req.query?.id as string);
+
+      if (req.method === 'GET') {
+        const msgs = getServerContactMessages();
+        return res.status(200).json(msgs);
+      } else if (req.method === 'POST') {
+        const saved = saveServerContactMessage(body || {});
+        return res.status(200).json(saved);
+      } else if (req.method === 'DELETE') {
+        if (paramId) {
+          deleteServerContactMessage(paramId);
+        }
+        return res.status(200).json({ success: true });
+      }
+    }
+
+    // --- HTML PAGES / OG META RENDERING ---
+    const ext = path.extname(cleanUrl).toLowerCase();
     const staticExts = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.ico', '.css', '.js', '.woff', '.woff2', '.json', '.webp'];
     if (staticExts.includes(ext)) {
       return res.status(404).send('Not found');

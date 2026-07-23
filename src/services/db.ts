@@ -322,7 +322,7 @@ export const dbService = {
     }
 
     try {
-      const res = await fetch('/api/blog-posts');
+      const res = await fetch(`/api/blog-posts?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -354,7 +354,7 @@ export const dbService = {
     }
 
     try {
-      const res = await fetch('/api/blog-posts');
+      const res = await fetch(`/api/blog-posts?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const posts: BlogPost[] = await res.json();
         const found = posts.find(p => p.slug === slug) ||
@@ -484,7 +484,7 @@ export const dbService = {
     }
 
     try {
-      const res = await fetch('/api/site-content');
+      const res = await fetch(`/api/site-content?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && Object.keys(data).length > 0) {
@@ -607,7 +607,7 @@ export const dbService = {
     }
 
     try {
-      const res = await fetch('/api/contact-messages');
+      const res = await fetch(`/api/contact-messages?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {

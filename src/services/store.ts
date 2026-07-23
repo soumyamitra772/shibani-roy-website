@@ -116,7 +116,10 @@ export interface StoreData {
   contactMessages: ContactMessage[];
 }
 
+let memoryStore: StoreData | null = (globalThis as any).__SHIBANI_STORE__ || null;
+
 export function readServerStore(): StoreData {
+  if (memoryStore) return memoryStore;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -124,23 +127,29 @@ export function readServerStore(): StoreData {
     if (fs.existsSync(STORE_FILE)) {
       const data = fs.readFileSync(STORE_FILE, 'utf-8');
       const parsed = JSON.parse(data);
-      return {
+      memoryStore = {
         siteContent: { ...SEED_SITE_CONTENT, ...(parsed.siteContent || {}) },
         blogPosts: Array.isArray(parsed.blogPosts) ? parsed.blogPosts : SEED_BLOG_POSTS,
         contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
       };
+      (globalThis as any).__SHIBANI_STORE__ = memoryStore;
+      return memoryStore;
     }
   } catch (err) {
     console.error('Error reading server store:', err);
   }
-  return {
+  memoryStore = {
     siteContent: { ...SEED_SITE_CONTENT },
     blogPosts: [...SEED_BLOG_POSTS],
     contactMessages: [],
   };
+  (globalThis as any).__SHIBANI_STORE__ = memoryStore;
+  return memoryStore;
 }
 
 export function writeServerStore(data: StoreData): void {
+  memoryStore = data;
+  (globalThis as any).__SHIBANI_STORE__ = data;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
