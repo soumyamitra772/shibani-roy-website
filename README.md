@@ -5,7 +5,7 @@ A clean, modern, and production-ready portfolio and blog website for **SHIBANI R
 ---
 
 ## 🎨 Design Philosophy
-* **Apple & OpenAI Inspired Minimalist Aesthetic**: A gorgeous, eye-friendly deep-space dark theme styled with luxurious typography pairs (Space Grotesk & Inter), generous margins, card hover micro-animations, and translucent frosted glass panels.
+* **Apple & OpenAI Inspired Minimalist Aesthetic**: A gorgeous, eye-friendly light theme with a clean white and zinc foundation, rose-pink brand accents, luxurious typography pairs (Cormorant Garamond & Inter), generous margins, card hover micro-animations, and translucent frosted glass panels.
 * **Dual Persistence System**: Out of the box, the site runs in **Persistent Sandbox Mode** using local storage, populated with beautiful seed content. Once connected to a live **Supabase** instance, it transitions into production cloud mode instantly!
 
 ---
