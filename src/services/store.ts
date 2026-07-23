@@ -116,28 +116,37 @@ export interface StoreData {
   contactMessages: ContactMessage[];
 }
 
+const READ_CANDIDATES = [
+  path.join('/tmp', 'shibani_store.json'),
+  path.join(process.cwd(), 'data', 'store.json'),
+  path.join(process.cwd(), 'store.json'),
+];
+
 let memoryStore: StoreData | null = (globalThis as any).__SHIBANI_STORE__ || null;
 
 export function readServerStore(): StoreData {
   if (memoryStore) return memoryStore;
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+
+  for (const storePath of READ_CANDIDATES) {
+    try {
+      if (fs.existsSync(storePath)) {
+        const raw = fs.readFileSync(storePath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          memoryStore = {
+            siteContent: { ...SEED_SITE_CONTENT, ...(parsed.siteContent || {}) },
+            blogPosts: Array.isArray(parsed.blogPosts) && parsed.blogPosts.length > 0 ? parsed.blogPosts : SEED_BLOG_POSTS,
+            contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
+          };
+          (globalThis as any).__SHIBANI_STORE__ = memoryStore;
+          return memoryStore;
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not read store from ${storePath}:`, err);
     }
-    if (fs.existsSync(STORE_FILE)) {
-      const data = fs.readFileSync(STORE_FILE, 'utf-8');
-      const parsed = JSON.parse(data);
-      memoryStore = {
-        siteContent: { ...SEED_SITE_CONTENT, ...(parsed.siteContent || {}) },
-        blogPosts: Array.isArray(parsed.blogPosts) ? parsed.blogPosts : SEED_BLOG_POSTS,
-        contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
-      };
-      (globalThis as any).__SHIBANI_STORE__ = memoryStore;
-      return memoryStore;
-    }
-  } catch (err) {
-    console.error('Error reading server store:', err);
   }
+
   memoryStore = {
     siteContent: { ...SEED_SITE_CONTENT },
     blogPosts: [...SEED_BLOG_POSTS],
@@ -150,13 +159,26 @@ export function readServerStore(): StoreData {
 export function writeServerStore(data: StoreData): void {
   memoryStore = data;
   (globalThis as any).__SHIBANI_STORE__ = data;
+
+  const jsonStr = JSON.stringify(data, null, 2);
+
+  // Try writing to primary project data folder first
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    const dataDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
     }
-    fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(dataDir, 'store.json'), jsonStr, 'utf-8');
+    return;
   } catch (err) {
-    console.error('Error writing server store:', err);
+    // Read-only filesystem on Vercel/serverless environments
+  }
+
+  // Fallback to /tmp directory on Vercel / serverless runtimes
+  try {
+    fs.writeFileSync(path.join('/tmp', 'shibani_store.json'), jsonStr, 'utf-8');
+  } catch (tmpErr) {
+    console.warn('Error writing server store to /tmp:', tmpErr);
   }
 }
 

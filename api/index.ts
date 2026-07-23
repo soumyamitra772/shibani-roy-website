@@ -268,84 +268,95 @@ export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): 
   const origin = baseOrigin || DEFAULT_BASE_URL;
   const cleanPath = urlPath.split('?')[0].replace(/\/$/, '') || '/';
 
-  const siteContent = getServerSiteContent();
-  const blogPosts = getServerBlogPosts();
+  try {
+    const siteContent = getServerSiteContent() || SEED_SITE_CONTENT;
+    const blogPosts = getServerBlogPosts() || SEED_BLOG_POSTS;
 
-  // Check for article route: /blog/:slug
-  if (cleanPath.startsWith('/blog/')) {
-    const slug = cleanPath.replace('/blog/', '');
-    let post: BlogPost | null = null;
+    // Check for article route: /blog/:slug
+    if (cleanPath.startsWith('/blog/')) {
+      const slug = cleanPath.replace('/blog/', '');
+      let post: BlogPost | null = null;
 
-    if (supabaseClient && slug) {
-      try {
-        const { data } = await supabaseClient
-          .from('blog_posts')
-          .select('*')
-          .eq('slug', slug)
-          .maybeSingle();
-        if (data) post = data;
-      } catch (e) {
-        console.warn('Server Supabase query error for slug:', slug, e);
+      if (supabaseClient && slug) {
+        try {
+          const { data } = await supabaseClient
+            .from('blog_posts')
+            .select('*')
+            .eq('slug', slug)
+            .maybeSingle();
+          if (data) post = data;
+        } catch (e) {
+          console.warn('Server Supabase query error for slug:', slug, e);
+        }
+      }
+
+      if (!post && slug) {
+        const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        post = blogPosts.find(p => p.slug === slug) ||
+               blogPosts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
+               blogPosts.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
+      }
+
+      if (post) {
+        const plainTextExcerpt = stripMarkdown(post.content || '').slice(0, 160);
+        return {
+          title: `${post.title} | ${siteContent?.profile_name || 'Shibani Roy'}`,
+          description: plainTextExcerpt || 'Read this article by Shibani Roy.',
+          image: getAbsoluteImageUrl(post.feature_image_url || siteContent?.hero_image_url, origin),
+          url: `${origin}/blog/${post.slug}`,
+          type: 'article',
+        };
       }
     }
 
-    if (!post && slug) {
-      const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
-      post = blogPosts.find(p => p.slug === slug) ||
-             blogPosts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
-             blogPosts.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
-    }
-
-    if (post) {
-      const plainTextExcerpt = stripMarkdown(post.content).slice(0, 160);
+    if (cleanPath === '/about') {
       return {
-        title: `${post.title} | ${siteContent.profile_name || 'Shibani Roy'}`,
-        description: plainTextExcerpt || 'Read this article by Shibani Roy.',
-        image: post.feature_image_url || siteContent.hero_image_url,
-        url: `${origin}/blog/${post.slug}`,
-        type: 'article',
+        title: `About | ${siteContent?.profile_name || 'Shibani Roy'}`,
+        description: siteContent?.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
+        image: getAbsoluteImageUrl(siteContent?.about_image_url || siteContent?.hero_image_url, origin),
+        url: `${origin}/about`,
+        type: 'website',
       };
     }
-  }
 
-  if (cleanPath === '/about') {
+    if (cleanPath === '/blog') {
+      return {
+        title: `Blog & Journals | ${siteContent?.profile_name || 'Shibani Roy'}`,
+        description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
+        image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
+        url: `${origin}/blog`,
+        type: 'website',
+      };
+    }
+
+    if (cleanPath === '/contact') {
+      return {
+        title: `Contact | ${siteContent?.profile_name || 'Shibani Roy'}`,
+        description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
+        image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
+        url: `${origin}/contact`,
+        type: 'website',
+      };
+    }
+
+    // Default Home Page Meta
     return {
-      title: `About | ${siteContent.profile_name || 'Shibani Roy'}`,
-      description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
-      image: siteContent.about_image_url || siteContent.hero_image_url,
-      url: `${origin}/about`,
+      title: `${siteContent?.profile_name || 'Shibani Roy'} | ${siteContent?.hero_tagline || "India's First Virtual AI Influencer & Creator"}`,
+      description: siteContent?.hero_intro || "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
+      image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
+      url: `${origin}/`,
+      type: 'website',
+    };
+  } catch (err) {
+    console.warn('Error resolving meta for path:', urlPath, err);
+    return {
+      title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
+      description: "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
+      image: `${origin}/images/shibani_hero_1784621056791.jpg`,
+      url: `${origin}/`,
       type: 'website',
     };
   }
-
-  if (cleanPath === '/blog') {
-    return {
-      title: `Blog & Journals | ${siteContent.profile_name || 'Shibani Roy'}`,
-      description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
-      image: siteContent.hero_image_url,
-      url: `${origin}/blog`,
-      type: 'website',
-    };
-  }
-
-  if (cleanPath === '/contact') {
-    return {
-      title: `Contact | ${siteContent.profile_name || 'Shibani Roy'}`,
-      description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
-      image: siteContent.hero_image_url,
-      url: `${origin}/contact`,
-      type: 'website',
-    };
-  }
-
-  // Default Home Page Meta
-  return {
-    title: `${siteContent.profile_name || 'Shibani Roy'} | ${siteContent.hero_tagline || "India's First Virtual AI Influencer & Creator"}`,
-    description: siteContent.hero_intro || "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
-    image: `${origin}${siteContent.hero_image_url.startsWith('/') ? siteContent.hero_image_url : '/' + siteContent.hero_image_url}`,
-    url: `${origin}/`,
-    type: 'website',
-  };
 }
 
 export async function processHtmlForRequest(rawHtml: string, urlPath: string, baseOrigin?: string): Promise<string> {
