@@ -391,20 +391,6 @@ export const dbService = {
       }
     }
 
-    try {
-      const res = await fetch('/api/blog-posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(post)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        result = data;
-      }
-    } catch (err) {
-      console.warn('Server API createBlogPost failed:', err);
-    }
-
     const localCreated = createLocalBlogPost(post);
     return result || localCreated;
   },
@@ -428,20 +414,6 @@ export const dbService = {
       }
     }
 
-    try {
-      const res = await fetch(`/api/blog-posts/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postUpdates)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        result = data;
-      }
-    } catch (err) {
-      console.warn('Server API updateBlogPost failed:', err);
-    }
-
     const localUpdated = updateLocalBlogPost(id, postUpdates);
     return result || localUpdated;
   },
@@ -458,12 +430,6 @@ export const dbService = {
       }
     }
 
-    try {
-      await fetch(`/api/blog-posts/${id}`, { method: 'DELETE' });
-    } catch (err) {
-      console.warn('Server API deleteBlogPost failed:', err);
-    }
-
     deleteLocalBlogPost(id);
   },
 
@@ -475,8 +441,15 @@ export const dbService = {
           .from('site_content')
           .select('*');
         if (!error && data && data.length > 0) {
-          localStorage.setItem('shibani_site_content', JSON.stringify(data[0]));
-          return data[0];
+          const row = data[0];
+          const merged: SiteContent = {
+            ...SEED_SITE_CONTENT,
+            ...Object.fromEntries(
+              Object.entries(row).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+            ),
+          } as SiteContent;
+          localStorage.setItem('shibani_site_content', JSON.stringify(merged));
+          return merged;
         }
       } catch (err) {
         console.warn('Supabase getSiteContent exception:', err);
@@ -530,20 +503,6 @@ export const dbService = {
       }
     }
 
-    try {
-      const res = await fetch('/api/site-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        result = data;
-      }
-    } catch (err) {
-      console.warn('Server API updateSiteContent failed:', err);
-    }
-
     const localUpdated = updateLocalSiteContent(updates);
     const finalContent = result || localUpdated;
     localStorage.setItem('shibani_site_content', JSON.stringify(finalContent));
@@ -571,20 +530,6 @@ export const dbService = {
       } catch (err) {
         console.warn('Supabase submitContactMessage exception:', err);
       }
-    }
-
-    try {
-      const res = await fetch('/api/contact-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(message)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        result = data;
-      }
-    } catch (err) {
-      console.warn('Server API submitContactMessage failed:', err);
     }
 
     const localMsg = submitLocalContactMessage(message);
@@ -633,12 +578,6 @@ export const dbService = {
       }
     }
 
-    try {
-      await fetch(`/api/contact-messages/${id}`, { method: 'DELETE' });
-    } catch (err) {
-      console.warn('Server API deleteContactMessage failed:', err);
-    }
-
     deleteLocalContactMessage(id);
   },
 
@@ -646,23 +585,16 @@ export const dbService = {
   async uploadImage(file: File): Promise<string> {
     if (supabase) {
       try {
-        // Try to upload to a bucket named 'shibani-assets'
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `blog/${fileName}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `site/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('shibani-assets')
-          .upload(filePath, file);
+          .upload(filePath, file, { upsert: true });
 
         if (uploadError) {
-          console.warn('Storage upload failed, falling back to FileReader: ', uploadError);
-          // Fall back to base64 if bucket doesn't exist yet
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
+          throw new Error(`Supabase Storage upload failed: ${uploadError.message}. Make sure the "shibani-assets" bucket exists and is set to PUBLIC in your Supabase dashboard under Storage → Buckets.`);
         }
 
         const { data } = supabase.storage
@@ -670,22 +602,12 @@ export const dbService = {
           .getPublicUrl(filePath);
 
         return data.publicUrl;
-      } catch (e) {
-        console.error('Storage error: ', e);
-        // Fallback to FileReader base64
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
+      } catch (e: any) {
+        throw new Error(e?.message || 'Image upload failed. Please check your Supabase Storage bucket setup.');
       }
     } else {
-      // In sandbox mode, read file to Base64 dataURL so it persists in local storage perfectly!
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
+      // Sandbox mode — warn clearly
+      throw new Error('Image upload requires Supabase. Please connect your Supabase project first.');
     }
   }
 };
