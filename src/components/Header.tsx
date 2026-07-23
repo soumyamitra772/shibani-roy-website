@@ -19,6 +19,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
   const navItems = [
     { label: 'Home', id: 'home', path: '/' },
     { label: 'About', id: 'about', path: '/about' },
+    { label: 'Services', id: 'services', path: '/services' },
     { label: 'Blog', id: 'blog', path: '/blog' },
     { label: 'Contact', id: 'contact', path: '/contact' },
   ];

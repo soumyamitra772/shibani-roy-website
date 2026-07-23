@@ -37,3 +37,22 @@ export interface ContactMessage {
   message: string;
   created_at: string;
 }
+
+export interface ServiceItem {
+  id: string;
+  title: string;
+  icon: string;
+  description: string;
+  includes: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ServicesPageSettings {
+  id: number;
+  hero_image_url: string;
+  hero_heading: string;
+  hero_subtext: string;
+  updated_at?: string;
+}

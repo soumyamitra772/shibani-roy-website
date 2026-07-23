@@ -181,10 +181,94 @@ Human-AI relationships are evolving beyond tools and commands. We are entering a
 
 
 -- ========================================================
--- OPTIONAL STORAGE BUCKETS SETUP GUIDE
+-- STORAGE BUCKETS SETUP GUIDE
 -- ========================================================
--- To support uploading feature images from the Admin Panel, do the following:
--- 1. In your Supabase Dashboard, go to "Storage".
--- 2. Click "New Bucket" and name it "shibani-assets".
--- 3. Set the bucket to "Public" (so public visitors can read image URLs).
--- 4. Set bucket policies to allow "Insert" and "Select" for authenticated users.
+-- To support uploading images from the Admin Panel, create two public buckets in Supabase Storage:
+-- 1. "shibani-assets" (for blog images, hero banners, avatars)
+-- 2. "services-images" (for services hero banner and service assets)
+-- Set both buckets to PUBLIC with allowed MIME types (image/jpeg, image/png, image/webp) and max file size 5MB.
+-- Storage Policies: Authenticated users can INSERT, UPDATE, DELETE. Public can SELECT (READ).
+
+-- ========================================================
+-- 4. SERVICES & SERVICES PAGE SETTINGS TABLES
+-- ========================================================
+
+-- Create services table
+CREATE TABLE IF NOT EXISTS services (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    icon TEXT,
+    description TEXT,
+    includes TEXT[] DEFAULT '{}',
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- Create services_page_settings table
+CREATE TABLE IF NOT EXISTS services_page_settings (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    hero_image_url TEXT DEFAULT '',
+    hero_heading TEXT NOT NULL DEFAULT 'Work With Shibani',
+    hero_subtext TEXT NOT NULL DEFAULT 'India''s AI virtual influencer — available for brand partnerships, digital campaigns, and virtual modeling projects.',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    CONSTRAINT single_row_check CHECK (id = 1)
+);
+
+-- Enable RLS on services tables
+ALTER TABLE services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE services_page_settings ENABLE ROW LEVEL SECURITY;
+
+-- --- services Policies ---
+-- Public can SELECT only active services
+CREATE POLICY "Allow public read of active services" 
+ON services FOR SELECT 
+USING (is_active = true);
+
+-- Logged-in admin users can read ALL services (including inactive)
+CREATE POLICY "Allow authenticated read of all services" 
+ON services FOR SELECT 
+TO authenticated 
+USING (true);
+
+-- Logged-in admin users can perform all operations on services
+CREATE POLICY "Allow authenticated edits of services" 
+ON services FOR ALL 
+TO authenticated 
+USING (true) 
+WITH CHECK (true);
+
+
+-- --- services_page_settings Policies ---
+-- Anyone (public) can view services page settings
+CREATE POLICY "Allow public read of services page settings" 
+ON services_page_settings FOR SELECT 
+USING (true);
+
+-- Logged-in admin users can update services page settings
+CREATE POLICY "Allow authenticated edits of services page settings" 
+ON services_page_settings FOR ALL 
+TO authenticated 
+USING (true) 
+WITH CHECK (true);
+
+
+-- --- SEED SERVICES DATA ---
+INSERT INTO services_page_settings (id, hero_heading, hero_subtext, hero_image_url)
+VALUES (
+    1,
+    'Work With Shibani',
+    'India''s AI virtual influencer — available for brand partnerships, digital campaigns, and virtual modeling projects.',
+    ''
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO services (icon, title, description, includes, sort_order, is_active) VALUES
+('🤝', 'Brand Collaboration', 'Sponsored posts, product features, and brand storytelling across platforms.', ARRAY['Instagram / Reels posts', 'LinkedIn content', 'Long-form blog feature', 'Custom Shibani × Brand narrative'], 1, true),
+('👗', 'Virtual Modeling', 'AI-generated fashion imagery featuring Shibani for lookbooks, campaigns, and product visuals.', ARRAY['Outfit showcase', 'Lifestyle imagery', 'Multi-look campaign shoots', 'Brand moodboard alignment'], 2, true),
+('✍️', 'Sponsored Blog Content', 'SEO-optimized articles written in Shibani''s voice, published on her blog.', ARRAY['1500–2500 word feature', 'SEO meta optimized', 'Backlink to brand site', 'Social amplification'], 3, true),
+('🎙️', 'Digital Campaigns', 'End-to-end campaigns with Shibani as the face — concept to content delivery.', ARRAY['Creative concept', 'Multi-platform rollout', 'Caption + copy writing', 'Campaign performance brief'], 4, true),
+('🎨', 'AI Image & Video Generation', 'Custom AI-generated visuals and short-form videos featuring Shibani — built for campaigns, ads, and social content.', ARRAY['Campaign-ready AI images', 'Short-form video clips', 'Brand-aligned visual style', 'Multiple format deliverables'], 5, true),
+('📱', 'UGC-Style AI Content for Brands', 'Authentic-feeling user-generated content created by Shibani''s AI persona — designed to convert on paid and organic channels.', ARRAY['Product unboxing style videos', 'Testimonial-format content', 'Platform-native formats (Reels, Shorts)', 'Hook + CTA scripting'], 6, true),
+('💡', 'Content Strategy & Creative Consultation', 'Strategic guidance for brands wanting to work with virtual influencers or build AI-powered content pipelines.', ARRAY['Virtual influencer brief', 'Content calendar planning', 'Platform strategy (India-focused)', '1:1 consultation session'], 7, true)
+ON CONFLICT DO NOTHING;
+

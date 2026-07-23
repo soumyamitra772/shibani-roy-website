@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BlogPost, SiteContent, ContactMessage } from '../types';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings } from '../types';
 import { dbService, isSupabaseConfigured, supabase } from '../services/db';
 import { renderMarkdown } from './AboutView';
 import { 
   Lock, User, Mail, Database, Eye, EyeOff, Save, Check, Loader, 
   Plus, Edit2, Trash2, Settings, FileText, Inbox, ChevronRight,
-  ArrowLeft, Upload, Sparkles, HelpCircle, AlertCircle, RefreshCw
+  ArrowLeft, Upload, Sparkles, HelpCircle, AlertCircle, RefreshCw,
+  Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -17,7 +18,7 @@ interface AdminViewProps {
   onUpdatePosts: () => void;
 }
 
-type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox';
+type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services';
 
 export default function AdminView({ 
   isAdminLoggedIn, 
@@ -58,6 +59,175 @@ export default function AdminView({
   const [aboutText, setAboutText] = useState(siteContent.about_text || '');
   const [isSavingAbout, setIsSavingAbout] = useState(false);
   const [saveAboutSuccess, setSaveAboutSuccess] = useState(false);
+
+  // Services Management State
+  const [adminServices, setAdminServices] = useState<ServiceItem[]>([]);
+  const [servicesSettings, setServicesSettings] = useState<ServicesPageSettings>({
+    id: 1,
+    hero_heading: "Work With Shibani",
+    hero_subtext: "India's AI virtual influencer — available for brand partnerships, digital campaigns, and virtual modeling projects.",
+    hero_image_url: ""
+  });
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [isSavingServicesSettings, setIsSavingServicesSettings] = useState(false);
+  const [saveServicesSettingsSuccess, setSaveServicesSettingsSuccess] = useState(false);
+  const [isUploadingServicesHero, setIsUploadingServicesHero] = useState(false);
+
+  // Service Edit / Create Modal State
+  const [editingService, setEditingService] = useState<Partial<ServiceItem> | null>(null);
+  const [includesInput, setIncludesInput] = useState('');
+  const [isSavingService, setIsSavingService] = useState(false);
+
+  const loadServicesData = async () => {
+    if (!isAdminLoggedIn) return;
+    setIsLoadingServices(true);
+    try {
+      const [srvs, stgs] = await Promise.all([
+        dbService.getServices(true),
+        dbService.getServicesPageSettings()
+      ]);
+      setAdminServices(srvs || []);
+      if (stgs) setServicesSettings(stgs);
+    } catch (err) {
+      console.error('Failed to load services in admin:', err);
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      loadServicesData();
+    }
+  }, [isAdminLoggedIn]);
+
+  const handleSaveServicesSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingServicesSettings(true);
+    setSaveServicesSettingsSuccess(false);
+    try {
+      const updated = await dbService.updateServicesPageSettings(servicesSettings);
+      setServicesSettings(updated);
+      setSaveServicesSettingsSuccess(true);
+      setTimeout(() => setSaveServicesSettingsSuccess(false), 3000);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving Services Page Settings: ' + err.message);
+    } finally {
+      setIsSavingServicesSettings(false);
+    }
+  };
+
+  const handleServicesHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingServicesHero(true);
+    try {
+      const imageUrl = await dbService.uploadServiceImage(file);
+      setServicesSettings(prev => ({ ...prev, hero_image_url: imageUrl }));
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to upload hero image: ' + err.message);
+    } finally {
+      setIsUploadingServicesHero(false);
+    }
+  };
+
+  const handleOpenCreateService = () => {
+    setEditingService({
+      title: '',
+      icon: '🤝',
+      description: '',
+      includes: [],
+      is_active: true,
+      sort_order: adminServices.length + 1
+    });
+    setIncludesInput('');
+  };
+
+  const handleOpenEditService = (service: ServiceItem) => {
+    setEditingService(service);
+    setIncludesInput((service.includes || []).join('\n'));
+  };
+
+  const handleSaveService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingService?.title) {
+      alert('Please enter a service title.');
+      return;
+    }
+
+    setIsSavingService(true);
+    const parsedIncludes = includesInput
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    const payload = {
+      title: editingService.title,
+      icon: editingService.icon || '✨',
+      description: editingService.description || '',
+      includes: parsedIncludes,
+      is_active: editingService.is_active !== undefined ? editingService.is_active : true,
+      sort_order: editingService.sort_order || (adminServices.length + 1)
+    };
+
+    try {
+      if (editingService.id) {
+        await dbService.updateService(editingService.id, payload);
+      } else {
+        await dbService.createService(payload);
+      }
+      await loadServicesData();
+      setEditingService(null);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving service: ' + err.message);
+    } finally {
+      setIsSavingService(false);
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    try {
+      await dbService.deleteService(id);
+      await loadServicesData();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error deleting service: ' + err.message);
+    }
+  };
+
+  const handleToggleServiceActive = async (service: ServiceItem) => {
+    try {
+      await dbService.updateService(service.id, { is_active: !service.is_active });
+      await loadServicesData();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error updating service status: ' + err.message);
+    }
+  };
+
+  const handleMoveService = async (service: ServiceItem, direction: 'up' | 'down') => {
+    const currentIndex = adminServices.findIndex(s => s.id === service.id);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= adminServices.length) return;
+
+    const targetService = adminServices[targetIndex];
+    try {
+      await Promise.all([
+        dbService.updateService(service.id, { sort_order: targetService.sort_order }),
+        dbService.updateService(targetService.id, { sort_order: service.sort_order })
+      ]);
+      await loadServicesData();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error reordering services: ' + err.message);
+    }
+  };
 
   // Sync state if siteContent updates
   useEffect(() => {
@@ -707,6 +877,7 @@ export default function AdminView({
         <div className="lg:col-span-3 flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-1.5 scrollbar-none border-b lg:border-b-0 lg:border-r border-brand-100 pr-0 lg:pr-6 shrink-0">
           {[
             { id: 'blog', label: 'Blog Posts', icon: FileText },
+            { id: 'services', label: 'Services Page', icon: Briefcase },
             { id: 'site-home', label: 'Home & Hero Settings', icon: Settings },
             { id: 'site-about', label: 'Biography Bio', icon: Sparkles },
             { id: 'inbox', label: 'Contact Inbox', icon: Inbox, badgeCount: messages.length }
@@ -1253,6 +1424,337 @@ export default function AdminView({
                   </ul>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: SERVICES MANAGEMENT */}
+          {activeTab === 'services' && (
+            <div className="space-y-8 text-left animate-fade-in">
+              {/* Part A: Services Page Settings Form */}
+              <div className="rounded-[32px] border border-brand-100 bg-white/80 p-6 sm:p-8 shadow-xl glass-card space-y-6">
+                <div className="flex justify-between items-center border-b border-brand-100 pb-4">
+                  <div>
+                    <h3 className="font-display font-bold text-xl text-brand-950">Services Hero & Settings</h3>
+                    <p className="text-xs text-brand-600 font-medium">Manage the hero banner text and image for the public /services page.</p>
+                  </div>
+                  {saveServicesSettingsSuccess && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full animate-fade-in">
+                      <Check className="h-3.5 w-3.5" /> Saved!
+                    </span>
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveServicesSettings} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono text-brand-700 font-bold uppercase tracking-wider block">Hero Heading</label>
+                    <input
+                      type="text"
+                      required
+                      value={servicesSettings.hero_heading}
+                      onChange={(e) => setServicesSettings(prev => ({ ...prev, hero_heading: e.target.value }))}
+                      className="w-full bg-white border border-brand-200 rounded-2xl py-3 px-4 text-sm font-semibold text-brand-950 focus:outline-none focus:border-brand-500 shadow-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono text-brand-700 font-bold uppercase tracking-wider block">Hero Subtext</label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={servicesSettings.hero_subtext}
+                      onChange={(e) => setServicesSettings(prev => ({ ...prev, hero_subtext: e.target.value }))}
+                      className="w-full bg-white border border-brand-200 rounded-2xl py-3 px-4 text-sm text-brand-950 focus:outline-none focus:border-brand-500 shadow-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono text-brand-700 font-bold uppercase tracking-wider block">Hero Banner Image</label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      {servicesSettings.hero_image_url ? (
+                        <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-brand-200 shrink-0">
+                          <img src={servicesSettings.hero_image_url} alt="Services Hero" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="h-24 w-36 rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/50 flex flex-col items-center justify-center text-zinc-400 shrink-0">
+                          <Upload className="h-5 w-5 mb-1" />
+                          <span className="text-[10px] font-mono font-bold">NO IMAGE</span>
+                        </div>
+                      )}
+
+                      <div className="space-y-2 flex-grow">
+                        <input
+                          type="text"
+                          value={servicesSettings.hero_image_url || ''}
+                          onChange={(e) => setServicesSettings(prev => ({ ...prev, hero_image_url: e.target.value }))}
+                          placeholder="Image URL or upload file..."
+                          className="w-full bg-white border border-brand-200 rounded-xl py-2 px-3 text-xs font-mono text-brand-950"
+                        />
+                        <label className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-bold text-brand-800 hover:bg-brand-50 cursor-pointer shadow-sm">
+                          {isUploadingServicesHero ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 text-brand-600" />}
+                          <span>{isUploadingServicesHero ? 'Uploading to services-images...' : 'Upload Image File'}</span>
+                          <input type="file" accept="image/*" onChange={handleServicesHeroUpload} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingServicesSettings}
+                      className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 transition"
+                    >
+                      {isSavingServicesSettings ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <span>Save Settings</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Part B: Services List & CRUD Management */}
+              <div className="rounded-[32px] border border-brand-100 bg-white/80 p-6 sm:p-8 shadow-xl glass-card space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-100 pb-4">
+                  <div>
+                    <h3 className="font-display font-bold text-xl text-brand-950">Active & Inactive Offerings</h3>
+                    <p className="text-xs text-brand-600 font-medium">Add, edit, toggle visibility, and reorder services displayed on the site.</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={loadServicesData}
+                      disabled={isLoadingServices}
+                      className="p-2 px-3 rounded-full border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 transition flex items-center gap-1 text-xs shadow-sm font-semibold"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isLoadingServices ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
+                    <button
+                      onClick={handleOpenCreateService}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 transition"
+                    >
+                      <Plus className="h-4 w-4" /> Add New Service
+                    </button>
+                  </div>
+                </div>
+
+                {isLoadingServices ? (
+                  <div className="text-center py-12">
+                    <Loader className="h-8 w-8 text-brand-600 animate-spin mx-auto mb-2" />
+                    <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Loading Services...</span>
+                  </div>
+                ) : adminServices.length === 0 ? (
+                  <div className="py-12 text-center rounded-2xl border border-dashed border-brand-200 text-brand-600">
+                    No services found. Click "Add New Service" above to create one.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {adminServices.map((service, index) => (
+                      <div
+                        key={service.id}
+                        className={`rounded-2xl border p-5 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                          service.is_active
+                            ? 'border-brand-200 bg-white/90 shadow-sm'
+                            : 'border-zinc-200 bg-zinc-50/70 opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-4 flex-grow">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-200 text-xl">
+                            {service.icon || '✨'}
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-display font-bold text-brand-950 text-base">{service.title}</h4>
+                              <span
+                                className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                                  service.is_active
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                    : 'bg-zinc-200 text-zinc-700 border border-zinc-300'
+                                }`}
+                              >
+                                {service.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-600 line-clamp-2 max-w-xl">{service.description}</p>
+                            {service.includes && service.includes.length > 0 && (
+                              <div className="text-[11px] text-brand-600 font-mono pt-1">
+                                {service.includes.length} included feature points
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Control Actions */}
+                        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                          {/* Order Buttons */}
+                          <div className="flex items-center border border-zinc-200 rounded-lg bg-zinc-50 p-0.5">
+                            <button
+                              onClick={() => handleMoveService(service, 'up')}
+                              disabled={index === 0}
+                              className="p-1.5 text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleMoveService(service, 'down')}
+                              disabled={index === adminServices.length - 1}
+                              className="p-1.5 text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
+                              title="Move Down"
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Toggle Active Button */}
+                          <button
+                            onClick={() => handleToggleServiceActive(service)}
+                            className={`p-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 ${
+                              service.is_active
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+                            }`}
+                            title={service.is_active ? 'Deactivate Service' : 'Activate Service'}
+                          >
+                            {service.is_active ? <ToggleRight className="h-4 w-4 text-emerald-600" /> : <ToggleLeft className="h-4 w-4 text-zinc-400" />}
+                          </button>
+
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => handleOpenEditService(service)}
+                            className="p-2 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 transition"
+                            title="Edit Service"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteService(service.id)}
+                            className="p-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-700 transition"
+                            title="Delete Service"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Service Edit/Create Modal Overlay */}
+              {editingService && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 p-4 backdrop-blur-sm animate-fade-in">
+                  <div className="w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                      <h3 className="font-display font-bold text-xl text-zinc-900">
+                        {editingService.id ? 'Edit Service Offering' : 'Create New Service Offering'}
+                      </h3>
+                      <button
+                        onClick={() => setEditingService(null)}
+                        className="text-zinc-400 hover:text-zinc-700 p-1"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveService} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div className="sm:col-span-1 space-y-1.5">
+                          <label className="text-xs font-mono font-bold text-zinc-700 uppercase">Icon / Emoji</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingService.icon || ''}
+                            onChange={(e) => setEditingService(prev => ({ ...prev, icon: e.target.value }))}
+                            placeholder="🤝"
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2.5 text-center text-lg font-semibold focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3 space-y-1.5">
+                          <label className="text-xs font-mono font-bold text-zinc-700 uppercase">Title *</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingService.title || ''}
+                            onChange={(e) => setEditingService(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="e.g. Virtual Modeling"
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2.5 px-3 text-sm font-semibold text-zinc-900 focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-mono font-bold text-zinc-700 uppercase">Description</label>
+                        <textarea
+                          rows={3}
+                          value={editingService.description || ''}
+                          onChange={(e) => setEditingService(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Brief description of what this service offers..."
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2.5 px-3 text-sm text-zinc-900 focus:outline-none focus:border-brand-500 resize-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-mono font-bold text-zinc-700 uppercase">
+                          Included Deliverables (1 per line)
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={includesInput}
+                          onChange={(e) => setIncludesInput(e.target.value)}
+                          placeholder="Instagram / Reels posts&#10;LinkedIn content&#10;Long-form blog feature"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2.5 px-3 text-xs font-mono text-zinc-900 focus:outline-none focus:border-brand-500 resize-none"
+                        />
+                        <p className="text-[11px] text-zinc-500">Each non-empty line will become a bullet point checkmark in the service card.</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 items-center border-t border-zinc-100 pt-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-mono font-bold text-zinc-700 uppercase">Sort Order</label>
+                          <input
+                            type="number"
+                            value={editingService.sort_order || 1}
+                            onChange={(e) => setEditingService(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 1 }))}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-2 px-3 text-xs font-mono text-zinc-900"
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-4">
+                          <input
+                            type="checkbox"
+                            id="service-active-chk"
+                            checked={editingService.is_active !== false}
+                            onChange={(e) => setEditingService(prev => ({ ...prev, is_active: e.target.checked }))}
+                            className="h-4 w-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-500"
+                          />
+                          <label htmlFor="service-active-chk" className="text-xs font-semibold text-zinc-800 cursor-pointer">
+                            Active (Visible on public site)
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-zinc-100">
+                        <button
+                          type="button"
+                          onClick={() => setEditingService(null)}
+                          className="rounded-full border border-zinc-200 px-5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSavingService}
+                          className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 transition"
+                        >
+                          {isSavingService ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          <span>Save Service</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

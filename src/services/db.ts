@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { BlogPost, SiteContent, ContactMessage } from '../types';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings } from '../types';
 
 const getEnvVar = (key: string): string => {
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
@@ -157,6 +157,86 @@ const SEED_CONTACT_MESSAGES: ContactMessage[] = [
   }
 ];
 
+export const SEED_SERVICES: ServiceItem[] = [
+  {
+    id: 'srv-1',
+    icon: '🤝',
+    title: 'Brand Collaboration',
+    description: 'Sponsored posts, product features, and brand storytelling across platforms.',
+    includes: ['Instagram / Reels posts', 'LinkedIn content', 'Long-form blog feature', 'Custom Shibani × Brand narrative'],
+    is_active: true,
+    sort_order: 1,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-2',
+    icon: '👗',
+    title: 'Virtual Modeling',
+    description: 'AI-generated fashion imagery featuring Shibani for lookbooks, campaigns, and product visuals.',
+    includes: ['Outfit showcase', 'Lifestyle imagery', 'Multi-look campaign shoots', 'Brand moodboard alignment'],
+    is_active: true,
+    sort_order: 2,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-3',
+    icon: '✍️',
+    title: 'Sponsored Blog Content',
+    description: 'SEO-optimized articles written in Shibani\'s voice, published on her blog.',
+    includes: ['1500–2500 word feature', 'SEO meta optimized', 'Backlink to brand site', 'Social amplification'],
+    is_active: true,
+    sort_order: 3,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-4',
+    icon: '🎙️',
+    title: 'Digital Campaigns',
+    description: 'End-to-end campaigns with Shibani as the face — concept to content delivery.',
+    includes: ['Creative concept', 'Multi-platform rollout', 'Caption + copy writing', 'Campaign performance brief'],
+    is_active: true,
+    sort_order: 4,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-5',
+    icon: '🎨',
+    title: 'AI Image & Video Generation',
+    description: 'Custom AI-generated visuals and short-form videos featuring Shibani — built for campaigns, ads, and social content.',
+    includes: ['Campaign-ready AI images', 'Short-form video clips', 'Brand-aligned visual style', 'Multiple format deliverables'],
+    is_active: true,
+    sort_order: 5,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-6',
+    icon: '📱',
+    title: 'UGC-Style AI Content for Brands',
+    description: 'Authentic-feeling user-generated content created by Shibani\'s AI persona — designed to convert on paid and organic channels.',
+    includes: ['Product unboxing style videos', 'Testimonial-format content', 'Platform-native formats (Reels, Shorts)', 'Hook + CTA scripting'],
+    is_active: true,
+    sort_order: 6,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'srv-7',
+    icon: '💡',
+    title: 'Content Strategy & Creative Consultation',
+    description: 'Strategic guidance for brands wanting to work with virtual influencers or build AI-powered content pipelines.',
+    includes: ['Virtual influencer brief', 'Content calendar planning', 'Platform strategy (India-focused)', '1:1 consultation session'],
+    is_active: true,
+    sort_order: 7,
+    created_at: new Date().toISOString()
+  }
+];
+
+export const SEED_SERVICES_PAGE_SETTINGS: ServicesPageSettings = {
+  id: 1,
+  hero_heading: "Work With Shibani",
+  hero_subtext: "India's AI virtual influencer — available for brand partnerships, digital campaigns, and virtual modeling projects.",
+  hero_image_url: ""
+};
+
 // Helper to initialize local storage
 const initLocalStorage = () => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
@@ -187,6 +267,14 @@ const initLocalStorage = () => {
 
   if (!localStorage.getItem('shibani_contact_messages')) {
     localStorage.setItem('shibani_contact_messages', JSON.stringify(SEED_CONTACT_MESSAGES));
+  }
+
+  if (!localStorage.getItem('shibani_services')) {
+    localStorage.setItem('shibani_services', JSON.stringify(SEED_SERVICES));
+  }
+
+  if (!localStorage.getItem('shibani_services_settings')) {
+    localStorage.setItem('shibani_services_settings', JSON.stringify(SEED_SERVICES_PAGE_SETTINGS));
   }
 };
 
@@ -301,6 +389,56 @@ export const deleteLocalContactMessage = (id: string): void => {
   let messages: ContactMessage[] = JSON.parse(localStorage.getItem('shibani_contact_messages') || '[]');
   messages = messages.filter(m => m.id !== id);
   localStorage.setItem('shibani_contact_messages', JSON.stringify(messages));
+};
+
+export const getLocalServices = (): ServiceItem[] => {
+  initLocalStorage();
+  const services: ServiceItem[] = JSON.parse(localStorage.getItem('shibani_services') || JSON.stringify(SEED_SERVICES));
+  return services.sort((a, b) => a.sort_order - b.sort_order);
+};
+
+export const createLocalService = (service: Omit<ServiceItem, 'id' | 'created_at'>): ServiceItem => {
+  initLocalStorage();
+  const services: ServiceItem[] = JSON.parse(localStorage.getItem('shibani_services') || JSON.stringify(SEED_SERVICES));
+  const newService: ServiceItem = {
+    ...service,
+    id: `srv-${Date.now()}`,
+    created_at: new Date().toISOString()
+  };
+  services.push(newService);
+  localStorage.setItem('shibani_services', JSON.stringify(services));
+  return newService;
+};
+
+export const updateLocalService = (id: string, updates: Partial<ServiceItem>): ServiceItem => {
+  initLocalStorage();
+  const services: ServiceItem[] = JSON.parse(localStorage.getItem('shibani_services') || JSON.stringify(SEED_SERVICES));
+  const index = services.findIndex(s => s.id === id);
+  if (index === -1) throw new Error('Service not found');
+  const updated = { ...services[index], ...updates };
+  services[index] = updated;
+  localStorage.setItem('shibani_services', JSON.stringify(services));
+  return updated;
+};
+
+export const deleteLocalService = (id: string): void => {
+  initLocalStorage();
+  let services: ServiceItem[] = JSON.parse(localStorage.getItem('shibani_services') || JSON.stringify(SEED_SERVICES));
+  services = services.filter(s => s.id !== id);
+  localStorage.setItem('shibani_services', JSON.stringify(services));
+};
+
+export const getLocalServicesPageSettings = (): ServicesPageSettings => {
+  initLocalStorage();
+  return JSON.parse(localStorage.getItem('shibani_services_settings') || JSON.stringify(SEED_SERVICES_PAGE_SETTINGS));
+};
+
+export const updateLocalServicesPageSettings = (updates: Partial<ServicesPageSettings>): ServicesPageSettings => {
+  initLocalStorage();
+  const current = getLocalServicesPageSettings();
+  const updated = { ...current, ...updates, updated_at: new Date().toISOString() };
+  localStorage.setItem('shibani_services_settings', JSON.stringify(updated));
+  return updated;
 };
 
 export const dbService = {
@@ -607,6 +745,189 @@ export const dbService = {
       }
     } else {
       // Sandbox mode — warn clearly
+      throw new Error('Image upload requires Supabase. Please connect your Supabase project first.');
+    }
+  },
+
+  // --- SERVICES & SERVICES PAGE SETTINGS ---
+  async getServices(includeInactive = false): Promise<ServiceItem[]> {
+    if (supabase) {
+      try {
+        let query = supabase.from('services').select('*').order('sort_order', { ascending: true });
+        if (!includeInactive) {
+          query = query.eq('is_active', true);
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          if (includeInactive) {
+            localStorage.setItem('shibani_services', JSON.stringify(data));
+          }
+          return data;
+        }
+      } catch (err) {
+        console.warn('Supabase getServices exception:', err);
+      }
+    }
+
+    const localServices = getLocalServices();
+    return includeInactive ? localServices : localServices.filter(s => s.is_active);
+  },
+
+  async createService(service: Omit<ServiceItem, 'id' | 'created_at'>): Promise<ServiceItem> {
+    let result: ServiceItem | null = null;
+    if (supabase) {
+      try {
+        const newSrv = {
+          ...service,
+          created_at: new Date().toISOString()
+        };
+        const { data, error } = await supabase
+          .from('services')
+          .insert([newSrv])
+          .select()
+          .single();
+        if (!error && data) {
+          result = data;
+        }
+      } catch (err) {
+        console.warn('Supabase createService exception:', err);
+      }
+    }
+
+    const localCreated = createLocalService(service);
+    return result || localCreated;
+  },
+
+  async updateService(id: string, updates: Partial<ServiceItem>): Promise<ServiceItem> {
+    let result: ServiceItem | null = null;
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) {
+          result = data;
+        }
+      } catch (err) {
+        console.warn('Supabase updateService exception:', err);
+      }
+    }
+
+    const localUpdated = updateLocalService(id, updates);
+    return result || localUpdated;
+  },
+
+  async deleteService(id: string): Promise<void> {
+    if (supabase) {
+      try {
+        await supabase
+          .from('services')
+          .delete()
+          .eq('id', id);
+      } catch (err) {
+        console.warn('Supabase deleteService exception:', err);
+      }
+    }
+
+    deleteLocalService(id);
+  },
+
+  async getServicesPageSettings(): Promise<ServicesPageSettings> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('services_page_settings')
+          .select('*')
+          .eq('id', 1)
+          .maybeSingle();
+        if (!error && data) {
+          localStorage.setItem('shibani_services_settings', JSON.stringify(data));
+          return data;
+        }
+      } catch (err) {
+        console.warn('Supabase getServicesPageSettings exception:', err);
+      }
+    }
+
+    return getLocalServicesPageSettings();
+  },
+
+  async updateServicesPageSettings(updates: Partial<ServicesPageSettings>): Promise<ServicesPageSettings> {
+    let result: ServicesPageSettings | null = null;
+    if (supabase) {
+      try {
+        const { data: existing } = await supabase.from('services_page_settings').select('id').eq('id', 1);
+        if (existing && existing.length > 0) {
+          const { data: updated, error } = await supabase
+            .from('services_page_settings')
+            .update({ ...updates, updated_at: new Date().toISOString() })
+            .eq('id', 1)
+            .select()
+            .single();
+          if (!error && updated) {
+            result = updated;
+          }
+        } else {
+          const { data: created, error } = await supabase
+            .from('services_page_settings')
+            .insert([{ id: 1, ...SEED_SERVICES_PAGE_SETTINGS, ...updates }])
+            .select()
+            .single();
+          if (!error && created) {
+            result = created;
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase updateServicesPageSettings exception:', err);
+      }
+    }
+
+    const localUpdated = updateLocalServicesPageSettings(updates);
+    const finalSettings = result || localUpdated;
+    localStorage.setItem('shibani_services_settings', JSON.stringify(finalSettings));
+    return finalSettings;
+  },
+
+  async uploadServiceImage(file: File): Promise<string> {
+    if (supabase) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `services/${fileName}`;
+
+        // Try services-images bucket first
+        let { error: uploadError } = await supabase.storage
+          .from('services-images')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          // Fallback to shibani-assets bucket
+          const { error: fallbackError } = await supabase.storage
+            .from('shibani-assets')
+            .upload(`services/${fileName}`, file, { upsert: true });
+
+          if (fallbackError) {
+            throw new Error(`Supabase Storage upload failed: ${uploadError.message}. Make sure the "services-images" or "shibani-assets" bucket exists and is set to PUBLIC.`);
+          }
+
+          const { data } = supabase.storage
+            .from('shibani-assets')
+            .getPublicUrl(`services/${fileName}`);
+          return data.publicUrl;
+        }
+
+        const { data } = supabase.storage
+          .from('services-images')
+          .getPublicUrl(filePath);
+
+        return data.publicUrl;
+      } catch (e: any) {
+        throw new Error(e?.message || 'Service image upload failed. Please check your Supabase Storage bucket setup.');
+      }
+    } else {
       throw new Error('Image upload requires Supabase. Please connect your Supabase project first.');
     }
   }

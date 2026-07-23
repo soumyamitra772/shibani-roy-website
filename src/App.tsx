@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import HomeView from './components/HomeView';
 import AboutView from './components/AboutView';
+import ServicesView from './components/ServicesView';
 import BlogView from './components/BlogView';
 import ContactView from './components/ContactView';
 import AdminView from './components/AdminView';
@@ -141,6 +142,10 @@ export default function App() {
         setRoute({ page: 'about', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
+      } else if (pathname === '/services' || pathname === '/services/') {
+        setRoute({ page: 'services', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       } else if (pathname === '/blog' || pathname === '/blog/') {
         setRoute({ page: 'blog', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -196,6 +201,17 @@ export default function App() {
         description: siteContent.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
         image: siteContent.about_image_url || siteContent.hero_image_url,
         url: `${origin}/about`,
+        type: 'website',
+      });
+      return;
+    }
+
+    if (route.page === 'services') {
+      updateMetaTags({
+        title: 'Services & Collaboration | Shibani Roy',
+        description: 'Brand collaborations, virtual modeling, sponsored content, and digital campaigns with Shibani Roy.',
+        image: siteContent.hero_image_url,
+        url: `${origin}/services`,
         type: 'website',
       });
       return;
@@ -269,6 +285,8 @@ export default function App() {
         );
       case 'about':
         return <AboutView siteContent={siteContent} />;
+      case 'services':
+        return <ServicesView />;
       case 'blog':
         return (
           <BlogView

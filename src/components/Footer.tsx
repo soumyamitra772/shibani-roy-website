@@ -54,6 +54,7 @@ export default function Footer({ siteContent }: FooterProps) {
           <div className="flex justify-center space-x-6 text-sm font-semibold text-zinc-600">
             <a onClick={() => navigate('/')} className="cursor-pointer hover:text-brand-600 transition">Home</a>
             <a onClick={() => navigate('/about')} className="cursor-pointer hover:text-brand-600 transition">About</a>
+            <a onClick={() => navigate('/services')} className="cursor-pointer hover:text-brand-600 transition">Services</a>
             <a onClick={() => navigate('/blog')} className="cursor-pointer hover:text-brand-600 transition">Blog</a>
             <a onClick={() => navigate('/contact')} className="cursor-pointer hover:text-brand-600 transition">Contact</a>
             <a onClick={() => navigate('/admin')} className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</a>
