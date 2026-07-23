@@ -2,16 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync, existsSync } from 'fs';
 import path, { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
-import {
-  getServerSiteContent,
-  updateServerSiteContent,
-  getServerBlogPosts,
-  saveServerBlogPost,
-  deleteServerBlogPost,
-  getServerContactMessages,
-  saveServerContactMessage,
-  deleteServerContactMessage
-} from '../src/services/store';
 
 export interface MetaTagOptions {
   title?: string;
@@ -264,97 +254,110 @@ if (isSupabaseEnvConfigured) {
   }
 }
 
+// Self-contained data helpers — no fs, no store.ts
+async function fetchSiteContentFromSupabase(client: any) {
+  try {
+    const { data, error } = await client.from('site_content').select('*');
+    if (!error && data && data.length > 0) return data[0];
+  } catch (e) {
+    console.warn('Supabase site_content fetch failed:', e);
+  }
+  return SEED_SITE_CONTENT;
+}
+
+async function fetchBlogPostBySlug(client: any, slug: string) {
+  try {
+    const { data } = await client
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .maybeSingle();
+    return data || null;
+  } catch (e) {
+    console.warn('Supabase blog post fetch failed:', e);
+    return null;
+  }
+}
+
+async function fetchAllBlogPosts(client: any) {
+  try {
+    const { data } = await client
+      .from('blog_posts')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
+    return data || SEED_BLOG_POSTS;
+  } catch (e) {
+    return SEED_BLOG_POSTS;
+  }
+}
+
 export async function resolveMetaForPath(urlPath: string, baseOrigin?: string): Promise<MetaTagOptions> {
   const origin = baseOrigin || DEFAULT_BASE_URL;
   const cleanPath = urlPath.split('?')[0].replace(/\/$/, '') || '/';
 
   try {
-    const siteContent = getServerSiteContent() || SEED_SITE_CONTENT;
-    const blogPosts = getServerBlogPosts() || SEED_BLOG_POSTS;
+    const siteContent = supabaseClient
+      ? await fetchSiteContentFromSupabase(supabaseClient)
+      : SEED_SITE_CONTENT;
 
-    // Check for article route: /blog/:slug
     if (cleanPath.startsWith('/blog/')) {
       const slug = cleanPath.replace('/blog/', '');
-      let post: BlogPost | null = null;
+      let post = supabaseClient
+        ? await fetchBlogPostBySlug(supabaseClient, slug)
+        : null;
 
-      if (supabaseClient && slug) {
-        try {
-          const { data } = await supabaseClient
-            .from('blog_posts')
-            .select('*')
-            .eq('slug', slug)
-            .maybeSingle();
-          if (data) post = data;
-        } catch (e) {
-          console.warn('Server Supabase query error for slug:', slug, e);
-        }
-      }
-
-      if (!post && slug) {
-        const cleanTarget = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        post = blogPosts.find(p => p.slug === slug) ||
-               blogPosts.find(p => p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget) ||
-               blogPosts.find(p => slug.includes(p.slug) || p.slug.includes(slug)) || null;
+      // Fallback to seed posts
+      if (!post) {
+        post = SEED_BLOG_POSTS.find(p => p.slug === slug) || null;
       }
 
       if (post) {
-        const plainTextExcerpt = stripMarkdown(post.content || '').slice(0, 160);
         return {
-          title: `${post.title} | ${siteContent?.profile_name || 'Shibani Roy'}`,
-          description: plainTextExcerpt || 'Read this article by Shibani Roy.',
-          image: getAbsoluteImageUrl(post.feature_image_url || siteContent?.hero_image_url, origin),
+          title: `${post.title} | ${siteContent.profile_name || 'Shibani Roy'}`,
+          description: stripMarkdown(post.content || '').slice(0, 160),
+          image: getAbsoluteImageUrl(post.feature_image_url || siteContent.hero_image_url, origin),
           url: `${origin}/blog/${post.slug}`,
           type: 'article',
         };
       }
     }
 
-    if (cleanPath === '/about') {
-      return {
-        title: `About | ${siteContent?.profile_name || 'Shibani Roy'}`,
-        description: siteContent?.hero_intro || "India's first virtual AI influencer, fashion model, and digital creator.",
-        image: getAbsoluteImageUrl(siteContent?.about_image_url || siteContent?.hero_image_url, origin),
-        url: `${origin}/about`,
-        type: 'website',
-      };
-    }
+    if (cleanPath === '/about') return {
+      title: `About | ${siteContent.profile_name || 'Shibani Roy'}`,
+      description: siteContent.hero_intro,
+      image: getAbsoluteImageUrl(siteContent.about_image_url || siteContent.hero_image_url, origin),
+      url: `${origin}/about`, type: 'website',
+    };
 
-    if (cleanPath === '/blog') {
-      return {
-        title: `Blog & Journals | ${siteContent?.profile_name || 'Shibani Roy'}`,
-        description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
-        image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
-        url: `${origin}/blog`,
-        type: 'website',
-      };
-    }
+    if (cleanPath === '/blog') return {
+      title: `Blog & Journals | ${siteContent.profile_name || 'Shibani Roy'}`,
+      description: 'Explore articles on AI, fashion, digital art, and future culture by Shibani Roy.',
+      image: getAbsoluteImageUrl(siteContent.hero_image_url, origin),
+      url: `${origin}/blog`, type: 'website',
+    };
 
-    if (cleanPath === '/contact') {
-      return {
-        title: `Contact | ${siteContent?.profile_name || 'Shibani Roy'}`,
-        description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
-        image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
-        url: `${origin}/contact`,
-        type: 'website',
-      };
-    }
+    if (cleanPath === '/contact') return {
+      title: `Contact | ${siteContent.profile_name || 'Shibani Roy'}`,
+      description: 'Get in touch with Shibani Roy for virtual modeling, brand partnerships, and media inquiries.',
+      image: getAbsoluteImageUrl(siteContent.hero_image_url, origin),
+      url: `${origin}/contact`, type: 'website',
+    };
 
-    // Default Home Page Meta
     return {
-      title: `${siteContent?.profile_name || 'Shibani Roy'} | ${siteContent?.hero_tagline || "India's First Virtual AI Influencer & Creator"}`,
-      description: siteContent?.hero_intro || "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
-      image: getAbsoluteImageUrl(siteContent?.hero_image_url, origin),
-      url: `${origin}/`,
-      type: 'website',
+      title: `${siteContent.profile_name || 'Shibani Roy'} | ${siteContent.hero_tagline}`,
+      description: siteContent.hero_intro,
+      image: getAbsoluteImageUrl(siteContent.hero_image_url, origin),
+      url: `${origin}/`, type: 'website',
     };
   } catch (err) {
-    console.warn('Error resolving meta for path:', urlPath, err);
+    console.warn('resolveMetaForPath error:', err);
     return {
-      title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
-      description: "Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive.",
+      title: "Shibani Roy | India's First Virtual AI Influencer",
+      description: "India's first virtual AI influencer, fashion model, and digital creator.",
       image: `${origin}/images/shibani_hero_1784621056791.jpg`,
-      url: `${origin}/`,
-      type: 'website',
+      url: `${origin}/`, type: 'website',
     };
   }
 }
@@ -432,55 +435,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // --- API ENDPOINTS ---
     if (cleanUrl === '/api/health') {
       return res.status(200).json({ status: 'ok' });
-    }
-
-    if (cleanUrl === '/api/site-content' || cleanUrl.startsWith('/api/site-content')) {
-      if (req.method === 'GET') {
-        const content = getServerSiteContent();
-        return res.status(200).json(content);
-      } else if (req.method === 'POST') {
-        const updated = updateServerSiteContent(body || {});
-        return res.status(200).json(updated);
-      }
-    }
-
-    if (cleanUrl === '/api/blog-posts' || cleanUrl.startsWith('/api/blog-posts')) {
-      const urlParts = cleanUrl.split('/').filter(Boolean);
-      const paramId = urlParts.length > 2 ? urlParts[2] : (req.query?.id as string);
-
-      if (req.method === 'GET') {
-        const posts = getServerBlogPosts();
-        return res.status(200).json(posts);
-      } else if (req.method === 'POST') {
-        const saved = saveServerBlogPost(body || { title: 'Untitled' });
-        return res.status(200).json(saved);
-      } else if (req.method === 'PUT') {
-        const saved = saveServerBlogPost({ ...(body || {}), id: paramId });
-        return res.status(200).json(saved);
-      } else if (req.method === 'DELETE') {
-        if (paramId) {
-          deleteServerBlogPost(paramId);
-        }
-        return res.status(200).json({ success: true });
-      }
-    }
-
-    if (cleanUrl === '/api/contact-messages' || cleanUrl.startsWith('/api/contact-messages')) {
-      const urlParts = cleanUrl.split('/').filter(Boolean);
-      const paramId = urlParts.length > 2 ? urlParts[2] : (req.query?.id as string);
-
-      if (req.method === 'GET') {
-        const msgs = getServerContactMessages();
-        return res.status(200).json(msgs);
-      } else if (req.method === 'POST') {
-        const saved = saveServerContactMessage(body || {});
-        return res.status(200).json(saved);
-      } else if (req.method === 'DELETE') {
-        if (paramId) {
-          deleteServerContactMessage(paramId);
-        }
-        return res.status(200).json({ success: true });
-      }
     }
 
     // --- HTML PAGES / OG META RENDERING ---
