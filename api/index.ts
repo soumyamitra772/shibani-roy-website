@@ -370,6 +370,8 @@ function getRawHtml(): string {
     join(cwd, 'dist', 'index.html'),
     join(cwd, 'index.html'),
     join(cwd, 'public', 'index.html'),
+    join(__dirname, '..', 'index.html'),
+    join(__dirname, '..', 'dist', 'index.html'),
   ];
   for (const p of candidates) {
     try {
@@ -378,25 +380,40 @@ function getRawHtml(): string {
       continue;
     }
   }
-  // Fallback HTML template
-  return `<!DOCTYPE html>
+  // Fallback HTML template including client script
+  return `<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Shibani Roy | India's First Virtual AI Influencer</title>
-<meta property="og:title" content="Shibani Roy | India's First Virtual AI Influencer" />
-<meta property="og:description" content="India's first virtual AI influencer — bold, warm, and emotionally adaptive." />
-<meta property="og:image" content="https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg" />
-<meta name="twitter:card" content="summary_large_image" />
-</head>
-<body><div id="root"></div></body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shibani Roy | India's First Virtual AI Influencer & Creator</title>
+    <meta name="description" content="Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive." />
+    <meta property="og:site_name" content="Shibani Roy" />
+    <meta property="og:title" content="Shibani Roy | India's First Virtual AI Influencer & Creator" />
+    <meta property="og:description" content="Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive." />
+    <meta property="og:image" content="https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg" />
+    <meta property="og:url" content="https://shibani-roy.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/jpeg" href="/images/shibani_logo_small_r_1784631811197.jpg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>`;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const requestUrl = req.url || '/';
+    let requestUrl = req.url || '/';
+
+    // Support Vercel rewritten paths
+    const matchedPath = req.headers['x-matched-path'] as string;
+    if (matchedPath && !matchedPath.startsWith('/api/index')) {
+      requestUrl = matchedPath;
+    }
+
     const cleanUrl = requestUrl.split('?')[0];
 
     // Parse JSON body if available
@@ -480,9 +497,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-    res.status(200).send(finalHtml);
+    return res.status(200).send(finalHtml);
   } catch (err: any) {
     console.error('OG handler error:', err);
-    res.status(500).send(`Internal Server Error: ${err?.message || err}`);
+    try {
+      const fallbackHtml = getRawHtml();
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.status(200).send(fallbackHtml);
+    } catch {
+      return res.status(200).send('<!doctype html><html><head><title>Shibani Roy</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>');
+    }
   }
 }
