@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path, { join } from 'path';
+import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import {
   getServerSiteContent,
@@ -366,16 +367,28 @@ export async function processHtmlForRequest(rawHtml: string, urlPath: string, ba
 
 function getRawHtml(): string {
   const cwd = process.cwd();
-  const candidates = [
+  const candidates: string[] = [
     join(cwd, 'dist', 'index.html'),
     join(cwd, 'index.html'),
     join(cwd, 'public', 'index.html'),
-    join(__dirname, '..', 'index.html'),
-    join(__dirname, '..', 'dist', 'index.html'),
   ];
+
+  try {
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    candidates.push(
+      join(currentDir, 'index.html'),
+      join(currentDir, '..', 'index.html'),
+      join(currentDir, '..', 'dist', 'index.html')
+    );
+  } catch {
+    // Ignore if fileURLToPath or import.meta.url is not supported in environment
+  }
+
   for (const p of candidates) {
     try {
-      return readFileSync(p, 'utf-8');
+      if (p && existsSync(p)) {
+        return readFileSync(p, 'utf-8');
+      }
     } catch {
       continue;
     }
