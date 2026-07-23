@@ -116,10 +116,12 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
               <span>{isSupabaseConfigured ? 'Supabase' : 'Sandbox Mode'}</span>
             </button>
 
-            {isAdminLoggedIn ? (
+            {isAdminLoggedIn && (
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => navigateTo('/admin')}
+                  onClick={() => {
+                    window.location.href = 'https://shibani-roy.vercel.app/admin';
+                  }}
                   className="rounded-full bg-brand-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-700 transition shadow-sm"
                 >
                   Admin Panel
@@ -131,13 +133,6 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
                   Logout
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => navigateTo('/admin')}
-                className="rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-semibold text-brand-900 hover:bg-brand-50 transition shadow-sm"
-              >
-                Admin Login
-              </button>
             )}
           </div>
 
@@ -181,34 +176,28 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
                 {item.label}
               </a>
             ))}
-            <div className="pt-4 border-t border-brand-100 flex flex-col gap-2">
-              {isAdminLoggedIn ? (
-                <>
-                  <button
-                    onClick={() => navigateTo('/admin')}
-                    className="w-full text-center rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
-                  >
-                    Admin Panel
-                  </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-center rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
+            {isAdminLoggedIn && (
+              <div className="pt-4 border-t border-brand-100 flex flex-col gap-2">
                 <button
-                  onClick={() => navigateTo('/admin')}
+                  onClick={() => {
+                    window.location.href = 'https://shibani-roy.vercel.app/admin';
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-center rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Admin Panel
+                </button>
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="w-full text-center rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900"
                 >
-                  Admin Login
+                  Logout
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Mobile Social Links */}
             <div className="pt-4 border-t border-zinc-100 flex items-center justify-center space-x-6">
