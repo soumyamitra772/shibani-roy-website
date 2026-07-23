@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync, existsSync } from 'fs';
 import path, { join } from 'path';
-import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import {
   getServerSiteContent,
@@ -368,52 +367,43 @@ export async function processHtmlForRequest(rawHtml: string, urlPath: string, ba
 function getRawHtml(): string {
   const cwd = process.cwd();
   const candidates: string[] = [
-    join(cwd, 'dist', 'index.html'),
-    join(cwd, 'index.html'),
-    join(cwd, 'public', 'index.html'),
+    path.join(cwd, 'dist', 'index.html'),
+    path.join(cwd, 'index.html'),
+    path.join(cwd, 'public', 'index.html'),
   ];
-
-  try {
-    const currentDir = path.dirname(fileURLToPath(import.meta.url));
-    candidates.push(
-      join(currentDir, 'index.html'),
-      join(currentDir, '..', 'index.html'),
-      join(currentDir, '..', 'dist', 'index.html')
-    );
-  } catch {
-    // Ignore if fileURLToPath or import.meta.url is not supported in environment
-  }
 
   for (const p of candidates) {
     try {
-      if (p && existsSync(p)) {
+      if (existsSync(p)) {
         return readFileSync(p, 'utf-8');
       }
     } catch {
       continue;
     }
   }
-  // Fallback HTML template including client script
+
+  // Safe fallback — never throws
   return `<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shibani Roy | India's First Virtual AI Influencer & Creator</title>
-    <meta name="description" content="Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive." />
-    <meta property="og:site_name" content="Shibani Roy" />
-    <meta property="og:title" content="Shibani Roy | India's First Virtual AI Influencer & Creator" />
-    <meta property="og:description" content="Shibani Roy is India's first virtual AI influencer — bold, warm, and emotionally adaptive." />
-    <meta property="og:image" content="https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg" />
-    <meta property="og:url" content="https://shibani-roy.vercel.app/" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/jpeg" href="/images/shibani_logo_small_r_1784631811197.jpg" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shibani Roy | India's First Virtual AI Influencer</title>
+  <meta name="description" content="India's first virtual AI influencer, fashion model, and digital creator." />
+  <meta property="og:site_name" content="Shibani Roy" />
+  <meta property="og:title" content="Shibani Roy | India's First Virtual AI Influencer" />
+  <meta property="og:description" content="India's first virtual AI influencer, fashion model, and digital creator." />
+  <meta property="og:image" content="https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg" />
+  <meta property="og:url" content="https://shibani-roy.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" href="/images/shibani_logo_small_r_1784631811197.jpg" />
+  <script type="module" crossorigin src="/assets/index.js"></script>
+  <link rel="stylesheet" href="/assets/index.css" />
+</head>
+<body>
+  <div id="root"></div>
+</body>
 </html>`;
 }
 
@@ -512,13 +502,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
     return res.status(200).send(finalHtml);
   } catch (err: any) {
-    console.error('OG handler error:', err);
+    console.error('Handler crash:', err?.message || err);
+    // Always serve index.html — never a 500
     try {
-      const fallbackHtml = getRawHtml();
+      const fallback = getRawHtml();
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.status(200).send(fallbackHtml);
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).send(fallback);
     } catch {
-      return res.status(200).send('<!doctype html><html><head><title>Shibani Roy</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>');
+      return res.status(200).send(
+        `<!doctype html><html><head><title>Shibani Roy</title>
+        <script>window.location.replace('/')</script>
+        </head><body><div id="root"></div></body></html>`
+      );
     }
   }
 }
