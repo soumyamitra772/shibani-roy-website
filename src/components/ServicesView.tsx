@@ -74,7 +74,7 @@ export default function ServicesView({ settings: initialSettings, services: init
                 </button>
 
                 <a
-                  href="https://t.me/shibani_companion_bot"
+                  href="https://t.me/ShibaniRoyBot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center space-x-2 rounded-full border border-brand-200/80 bg-white px-6 py-3.5 text-sm font-semibold text-brand-900 shadow-sm transition hover:bg-brand-50/80"
