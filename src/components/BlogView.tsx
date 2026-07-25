@@ -85,6 +85,39 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
 
     return (
       <article className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 space-y-10 animate-fade-in">
+        {/* JSON-LD Article Schema for Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "headline": post.title,
+              "image": post.feature_image_url || 'https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg',
+              "datePublished": post.created_at,
+              "dateModified": post.created_at,
+              "author": {
+                "@type": "Person",
+                "name": "Shibani Roy",
+                "url": "https://shibani-roy.vercel.app/about"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Shibani Roy",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://shibani-roy.vercel.app/images/shibani_logo_small_r_1784631811197.jpg"
+                }
+              },
+              "description": post.content.replace(/[#*_`>]/g, '').slice(0, 160),
+              "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": `https://shibani-roy.vercel.app/blog/${post.slug}`
+              }
+            })
+          }}
+        />
+
         {/* Back navigation */}
         <div className="flex justify-between items-center">
           <button
