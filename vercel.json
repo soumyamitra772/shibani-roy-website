@@ -11,6 +11,7 @@
     { "source": "/about", "destination": "/api/index" },
     { "source": "/blog", "destination": "/api/index" },
     { "source": "/contact", "destination": "/api/index" },
+    { "source": "/sitemap.xml", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

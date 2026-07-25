@@ -330,3 +330,41 @@ export async function processHtmlForRequest(rawHtml: string, urlPath: string, ba
   const metaOptions = await resolveMetaForPath(urlPath, baseOrigin);
   return injectMetaTags(rawHtml, metaOptions, baseOrigin);
 }
+
+export async function generateDynamicSitemap(baseUrl: string = 'https://shibani-roy.vercel.app'): Promise<string> {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const staticUrls = [
+    { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: `${baseUrl}/about`, priority: '0.8', changefreq: 'monthly' },
+    { loc: `${baseUrl}/blog`, priority: '0.9', changefreq: 'weekly' },
+    { loc: `${baseUrl}/services`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${baseUrl}/contact`, priority: '0.7', changefreq: 'monthly' },
+  ];
+
+  let blogUrls: string[] = [];
+  try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey) {
+      const client = createClient(supabaseUrl, supabaseKey);
+      const { data } = await client
+        .from('blog_posts')
+        .select('slug, created_at')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+      if (data) {
+        blogUrls = data.map(p => 
+          `  <url>\n    <loc>${baseUrl}/blog/${p.slug}</loc>\n    <lastmod>${p.created_at.split('T')[0]}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`
+        );
+      }
+    }
+  } catch (e) { /* fallback to static only */ }
+
+  const staticEntries = staticUrls.map(u =>
+    `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`
+  ).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticEntries}\n${blogUrls.join('\n')}\n</urlset>`;
+}
+

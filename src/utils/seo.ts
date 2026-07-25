@@ -82,6 +82,15 @@ export function updateMetaTags({ title, description, image, url, type }: MetaTag
     const cleanUrl = url.replace('https://shibani-roy-website.vercel.app', origin);
     setMetaTag('property', 'og:url', cleanUrl);
     setMetaTag('name', 'twitter:url', cleanUrl);
+
+    // Update canonical link tag dynamically per page
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', cleanUrl);
   }
 
   if (type) {
