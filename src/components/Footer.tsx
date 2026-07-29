@@ -57,6 +57,7 @@ export default function Footer({ siteContent }: FooterProps) {
             <a onClick={() => navigate('/services')} className="cursor-pointer hover:text-brand-600 transition">Services</a>
             <a onClick={() => navigate('/blog')} className="cursor-pointer hover:text-brand-600 transition">Blog</a>
             <a onClick={() => navigate('/contact')} className="cursor-pointer hover:text-brand-600 transition">Contact</a>
+            <a onClick={() => navigate('/privacy')} className="cursor-pointer hover:text-brand-600 transition">Privacy</a>
             <a onClick={() => navigate('/admin')} className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</a>
           </div>
 

@@ -56,3 +56,18 @@ export interface ServicesPageSettings {
   hero_subtext: string;
   updated_at?: string;
 }
+
+export interface PrivacySectionData {
+  id: string;
+  title: string;
+  content: string[];
+  iconName?: string;
+}
+
+export interface PrivacyPolicyData {
+  lastUpdated: string;
+  title: string;
+  subtitle: string;
+  sections: PrivacySectionData[];
+}
+

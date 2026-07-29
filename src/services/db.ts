@@ -1,5 +1,86 @@
 import { createClient } from '@supabase/supabase-js';
-import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings } from '../types';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
+
+export const DEFAULT_PRIVACY_CONTENT: PrivacyPolicyData = {
+  lastUpdated: 'July 29, 2026',
+  title: 'Privacy Policy',
+  subtitle: 'How Shibani Roy collects, uses, and protects your data across AI conversational experiences.',
+  sections: [
+    {
+      id: 'introduction',
+      title: '1. Introduction',
+      iconName: 'Shield',
+      content: [
+        'Welcome to the official Privacy Policy for Shibani Roy — India’s Virtual AI Influencer & Conversational Companion.',
+        'This policy outlines how we handle user data when you interact with Shibani Roy across our web portal, social channels, and AI messaging bots on Telegram, Instagram, and Facebook.',
+        'We respect your privacy and are committed to protecting any personal information collected during your interactions with our AI companion.'
+      ]
+    },
+    {
+      id: 'information-collected',
+      title: '2. Information We Collect',
+      iconName: 'MessageSquare',
+      content: [
+        'When you engage in conversations with Shibani Roy on platforms such as Instagram, Facebook, or Telegram, we collect the following data:',
+        '• Platform User Identifiers: Your platform-specific user ID, username, or handle on Instagram, Facebook, or Telegram.',
+        '• Message Content: The text messages, prompts, and queries you send during chat sessions.',
+        '• Interaction Metadata: Timestamps of interactions and message delivery status.'
+      ]
+    },
+    {
+      id: 'how-we-use-information',
+      title: '3. How We Use Information',
+      iconName: 'Cpu',
+      content: [
+        'The information collected is used strictly and exclusively for generating relevant, engaging AI responses in real-time.',
+        '• Generating AI Responses: Message content is processed to synthesize contextually accurate dialogue from Shibani Roy.',
+        '• Session Continuity: User IDs are used to maintain context across multi-turn chat sessions.',
+        '• We DO NOT sell, lease, or monetize your personal conversation data or platform IDs to advertisers or third-party brokers.'
+      ]
+    },
+    {
+      id: 'data-retention',
+      title: '4. Data Retention & Security',
+      iconName: 'Database',
+      content: [
+        '• Secure Storage: All stored user data, message logs, and interaction records are housed securely in Supabase with database-level encryption.',
+        '• Access Control: Access to conversation logs is restricted strictly to authorized systems and maintainers for system operation and debugging.',
+        '• Encryption: Data transmitted between platforms is encrypted in transit using industry-standard TLS protocols.'
+      ]
+    },
+    {
+      id: 'data-deletion',
+      title: '5. Data Deletion Rights',
+      iconName: 'Trash2',
+      content: [
+        'You have full ownership of your data and can request complete deletion of your records at any time.',
+        'If you wish to delete your chat history, user ID, or stored interaction logs from our databases, please contact us directly.',
+        'Upon receiving a verifiable request, we will permanently purge all associated user IDs and conversation data within 30 days.'
+      ]
+    },
+    {
+      id: 'third-party-services',
+      title: '6. Third-Party Services',
+      iconName: 'Lock',
+      content: [
+        'To power Shibani Roy’s intelligence and multi-platform presence, we integrate with trusted third-party service providers:',
+        '• Google Gemini API: Powers the underlying language models for natural language understanding and response generation.',
+        '• Meta Platforms (Instagram & Facebook): Handles webhook events and messaging routing for social media chat channels.',
+        '• Supabase: Provides encrypted cloud database hosting for user interaction records and system content management.'
+      ]
+    },
+    {
+      id: 'contact-us',
+      title: '7. Contact Us',
+      iconName: 'Mail',
+      content: [
+        'If you have any questions about this Privacy Policy, wish to exercise your data deletion rights, or have privacy concerns, please contact our team at:',
+        '• Email: rshibani096@gmail.com',
+        '• Official Website: https://shibani-roy.vercel.app/contact'
+      ]
+    }
+  ]
+};
 
 const getEnvVar = (key: string): string => {
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
@@ -930,5 +1011,83 @@ export const dbService = {
     } else {
       throw new Error('Image upload requires Supabase. Please connect your Supabase project first.');
     }
+  },
+
+  // --- SITE SETTINGS (KEY-VALUE) & PRIVACY POLICY ---
+  async getSiteSetting(key: string): Promise<string | null> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
+        if (!error && data && data.value) {
+          localStorage.setItem(`shibani_site_setting_${key}`, data.value);
+          return data.value;
+        }
+      } catch (err) {
+        console.warn(`Supabase getSiteSetting(${key}) exception:`, err);
+      }
+    }
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem(`shibani_site_setting_${key}`);
+    }
+    return null;
+  },
+
+  async updateSiteSetting(key: string, value: string): Promise<string> {
+    const updated_at = new Date().toISOString();
+    if (supabase) {
+      try {
+        const { data: existing } = await supabase
+          .from('site_settings')
+          .select('key')
+          .eq('key', key);
+
+        if (existing && existing.length > 0) {
+          const { error } = await supabase
+            .from('site_settings')
+            .update({ value, updated_at })
+            .eq('key', key);
+          if (error) console.warn(`Supabase update error for site_settings key ${key}:`, error);
+        } else {
+          const { error } = await supabase
+            .from('site_settings')
+            .insert([{ key, value, updated_at }]);
+          if (error) console.warn(`Supabase insert error for site_settings key ${key}:`, error);
+        }
+      } catch (err) {
+        console.warn(`Supabase updateSiteSetting(${key}) exception:`, err);
+      }
+    }
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(`shibani_site_setting_${key}`, value);
+    }
+    return value;
+  },
+
+  async getPrivacyPolicy(): Promise<PrivacyPolicyData> {
+    try {
+      const rawValue = await this.getSiteSetting('privacy_policy');
+      if (rawValue) {
+        const parsed = JSON.parse(rawValue);
+        if (parsed && parsed.title && Array.isArray(parsed.sections)) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse privacy policy from site_settings:', e);
+    }
+    return DEFAULT_PRIVACY_CONTENT;
+  },
+
+  async updatePrivacyPolicy(data: PrivacyPolicyData): Promise<PrivacyPolicyData> {
+    const stringified = JSON.stringify(data);
+    await this.updateSiteSetting('privacy_policy', stringified);
+    return data;
   }
 };
+

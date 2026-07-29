@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings } from '../types';
-import { dbService, isSupabaseConfigured, supabase } from '../services/db';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
+import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT } from '../services/db';
 import { renderMarkdown } from './AboutView';
 import { 
   Lock, User, Mail, Database, Eye, EyeOff, Save, Check, Loader, 
   Plus, Edit2, Trash2, Settings, FileText, Inbox, ChevronRight,
   ArrowLeft, Upload, Sparkles, HelpCircle, AlertCircle, RefreshCw,
-  Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X
+  Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X, Shield
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -18,7 +18,7 @@ interface AdminViewProps {
   onUpdatePosts: () => void;
 }
 
-type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services';
+type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'privacy';
 
 export default function AdminView({ 
   isAdminLoggedIn, 
@@ -78,6 +78,12 @@ export default function AdminView({
   const [includesInput, setIncludesInput] = useState('');
   const [isSavingService, setIsSavingService] = useState(false);
 
+  // Privacy Policy state
+  const [privacyForm, setPrivacyForm] = useState<PrivacyPolicyData>(DEFAULT_PRIVACY_CONTENT);
+  const [isLoadingPrivacy, setIsLoadingPrivacy] = useState(false);
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+  const [savePrivacySuccess, setSavePrivacySuccess] = useState(false);
+
   const loadServicesData = async () => {
     if (!isAdminLoggedIn) return;
     setIsLoadingServices(true);
@@ -95,11 +101,96 @@ export default function AdminView({
     }
   };
 
+  const loadPrivacyData = async () => {
+    if (!isAdminLoggedIn) return;
+    setIsLoadingPrivacy(true);
+    try {
+      const policy = await dbService.getPrivacyPolicy();
+      if (policy) {
+        setPrivacyForm(policy);
+      }
+    } catch (err) {
+      console.error('Failed to load privacy policy in admin:', err);
+    } finally {
+      setIsLoadingPrivacy(false);
+    }
+  };
+
   useEffect(() => {
     if (isAdminLoggedIn) {
       loadServicesData();
+      loadPrivacyData();
     }
   }, [isAdminLoggedIn]);
+
+  const handleSavePrivacyPolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPrivacy(true);
+    setSavePrivacySuccess(false);
+    try {
+      const updated = await dbService.updatePrivacyPolicy(privacyForm);
+      setPrivacyForm(updated);
+      setSavePrivacySuccess(true);
+      setTimeout(() => setSavePrivacySuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Error saving Privacy Policy:', err);
+      alert('Failed to save Privacy Policy: ' + (err?.message || err));
+    } finally {
+      setIsSavingPrivacy(false);
+    }
+  };
+
+  const handleUpdatePrivacySectionTitle = (index: number, title: string) => {
+    setPrivacyForm(prev => {
+      const updatedSections = [...prev.sections];
+      updatedSections[index] = { ...updatedSections[index], title };
+      return { ...prev, sections: updatedSections };
+    });
+  };
+
+  const handleUpdatePrivacySectionContent = (index: number, rawText: string) => {
+    const paragraphs = rawText.split('\n').filter(p => p.trim().length > 0);
+    setPrivacyForm(prev => {
+      const updatedSections = [...prev.sections];
+      updatedSections[index] = { ...updatedSections[index], content: paragraphs };
+      return { ...prev, sections: updatedSections };
+    });
+  };
+
+  const handleUpdatePrivacySectionIcon = (index: number, iconName: string) => {
+    setPrivacyForm(prev => {
+      const updatedSections = [...prev.sections];
+      updatedSections[index] = { ...updatedSections[index], iconName };
+      return { ...prev, sections: updatedSections };
+    });
+  };
+
+  const handleAddPrivacySection = () => {
+    setPrivacyForm(prev => {
+      const newSection: PrivacySectionData = {
+        id: `section-${Date.now()}`,
+        title: `${prev.sections.length + 1}. New Policy Section`,
+        iconName: 'Shield',
+        content: ['Add details for this section here...']
+      };
+      return { ...prev, sections: [...prev.sections, newSection] };
+    });
+  };
+
+  const handleDeletePrivacySection = (index: number) => {
+    if (confirm('Are you sure you want to delete this policy section?')) {
+      setPrivacyForm(prev => {
+        const updatedSections = prev.sections.filter((_, i) => i !== index);
+        return { ...prev, sections: updatedSections };
+      });
+    }
+  };
+
+  const handleResetPrivacyDefault = () => {
+    if (confirm('Reset privacy policy back to default template?')) {
+      setPrivacyForm(DEFAULT_PRIVACY_CONTENT);
+    }
+  };
 
   const handleSaveServicesSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -880,6 +971,7 @@ export default function AdminView({
             { id: 'services', label: 'Services Page', icon: Briefcase },
             { id: 'site-home', label: 'Home & Hero Settings', icon: Settings },
             { id: 'site-about', label: 'Biography Bio', icon: Sparkles },
+            { id: 'privacy', label: 'Privacy Policy', icon: Shield },
             { id: 'inbox', label: 'Contact Inbox', icon: Inbox, badgeCount: messages.length }
           ].map((tab) => {
             const IconComponent = tab.icon;
@@ -1807,6 +1899,178 @@ export default function AdminView({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB 5: PRIVACY POLICY EDITOR */}
+          {activeTab === 'privacy' && (
+            <div className="space-y-6 text-left animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-100 pb-4">
+                <div>
+                  <h3 className="font-display font-bold text-xl text-brand-950 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-brand-600" />
+                    Privacy Policy Editor
+                  </h3>
+                  <p className="text-xs text-brand-600 font-medium mt-1">
+                    Manage and update privacy disclosures and section content saved to the site_settings table in Supabase.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={loadPrivacyData}
+                    disabled={isLoadingPrivacy}
+                    className="p-2 px-3 rounded-full border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 transition flex items-center gap-1 text-xs shadow-sm font-semibold"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingPrivacy ? 'animate-spin' : ''}`} /> Refresh
+                  </button>
+                  <button
+                    onClick={handleResetPrivacyDefault}
+                    className="p-2 px-3 rounded-full border border-zinc-200 text-zinc-600 bg-white hover:bg-zinc-100 transition flex items-center gap-1 text-xs shadow-sm font-semibold"
+                  >
+                    Reset Defaults
+                  </button>
+                </div>
+              </div>
+
+              {savePrivacySuccess && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>Privacy Policy changes saved successfully to site_settings!</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSavePrivacyPolicy} className="space-y-6">
+                {/* Page Level Metadata */}
+                <div className="rounded-[28px] border border-brand-100 bg-white/80 p-6 shadow-md glass-card space-y-4">
+                  <h4 className="font-display font-bold text-sm text-brand-950 uppercase tracking-wide border-b border-brand-100 pb-2">
+                    Header Title & Subtitle
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono text-brand-700 font-bold block">Page Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={privacyForm.title}
+                        onChange={(e) => setPrivacyForm(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full bg-white border border-brand-200 rounded-xl py-2.5 px-4 text-sm font-semibold text-brand-950 focus:outline-none focus:border-brand-500 shadow-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono text-brand-700 font-bold block">Last Updated Timestamp</label>
+                      <input
+                        type="text"
+                        required
+                        value={privacyForm.lastUpdated}
+                        onChange={(e) => setPrivacyForm(prev => ({ ...prev, lastUpdated: e.target.value }))}
+                        className="w-full bg-white border border-brand-200 rounded-xl py-2.5 px-4 text-sm font-semibold text-brand-950 focus:outline-none focus:border-brand-500 shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono text-brand-700 font-bold block">Subtitle Description</label>
+                    <textarea
+                      rows={2}
+                      value={privacyForm.subtitle}
+                      onChange={(e) => setPrivacyForm(prev => ({ ...prev, subtitle: e.target.value }))}
+                      className="w-full bg-white border border-brand-200 rounded-xl py-2.5 px-4 text-xs font-medium text-brand-900 focus:outline-none focus:border-brand-500 shadow-sm resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Privacy Sections */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-display font-bold text-base text-brand-950">
+                      Policy Sections ({privacyForm.sections.length})
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleAddPrivacySection}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 border border-brand-200 px-4 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100 transition shadow-sm"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-brand-600" /> Add Section
+                    </button>
+                  </div>
+
+                  {privacyForm.sections.map((section, idx) => (
+                    <div
+                      key={section.id || idx}
+                      className="rounded-[28px] border border-brand-100 bg-white/90 p-6 shadow-sm space-y-4 text-left"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-100 pb-3">
+                        <div className="flex items-center gap-2 flex-grow">
+                          <span className="text-xs font-mono font-bold text-brand-500 px-2 py-0.5 rounded-full bg-brand-50 shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            value={section.title}
+                            onChange={(e) => handleUpdatePrivacySectionTitle(idx, e.target.value)}
+                            placeholder="Section Title (e.g. 1. Introduction)"
+                            className="w-full bg-white border border-brand-200 rounded-xl py-2 px-3 text-sm font-bold text-brand-950 focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <select
+                            value={section.iconName || 'Shield'}
+                            onChange={(e) => handleUpdatePrivacySectionIcon(idx, e.target.value)}
+                            className="bg-brand-50 border border-brand-200 rounded-xl py-1.5 px-3 text-xs font-mono font-semibold text-brand-800"
+                          >
+                            <option value="Shield">Shield Icon</option>
+                            <option value="MessageSquare">MessageSquare Icon</option>
+                            <option value="Cpu">Cpu / AI Icon</option>
+                            <option value="Database">Database Icon</option>
+                            <option value="Trash2">Trash2 Icon</option>
+                            <option value="Lock">Lock Icon</option>
+                            <option value="Mail">Mail Icon</option>
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePrivacySection(idx)}
+                            className="p-1.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition"
+                            title="Delete section"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-mono font-bold text-zinc-700 block">
+                          Section Paragraphs (Each line creates a separate paragraph block)
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={section.content.join('\n')}
+                          onChange={(e) => handleUpdatePrivacySectionContent(idx, e.target.value)}
+                          placeholder="Enter paragraph content..."
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl py-3 px-4 text-xs font-sans text-zinc-900 leading-relaxed focus:outline-none focus:border-brand-500 resize-y"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Save Button */}
+                <div className="pt-2 flex items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={isSavingPrivacy}
+                    className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-8 py-3 text-xs font-bold text-white shadow-lg hover:bg-brand-700 transition"
+                  >
+                    {isSavingPrivacy ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>

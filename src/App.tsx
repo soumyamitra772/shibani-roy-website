@@ -7,6 +7,7 @@ import ServicesView from './components/ServicesView';
 import BlogView from './components/BlogView';
 import ContactView from './components/ContactView';
 import AdminView from './components/AdminView';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import { dbService, isSupabaseConfigured, supabase } from './services/db';
 import { BlogPost, SiteContent } from './types';
 import { updateMetaTags, stripMarkdown } from './utils/seo';
@@ -154,6 +155,10 @@ export default function App() {
         setRoute({ page: 'contact', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
+      } else if (pathname === '/privacy' || pathname === '/privacy/') {
+        setRoute({ page: 'privacy', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       } else if (pathname === '/admin' || pathname === '/admin/') {
         setRoute({ page: 'admin', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -239,6 +244,17 @@ export default function App() {
       return;
     }
 
+    if (route.page === 'privacy') {
+      updateMetaTags({
+        title: 'Privacy Policy | Shibani Roy',
+        description: 'Privacy Policy for Shibani Roy — India’s Virtual AI Influencer & Conversational Companion.',
+        image: siteContent.hero_image_url,
+        url: `${origin}/privacy`,
+        type: 'website',
+      });
+      return;
+    }
+
     // Default / Home page (route.page === 'home')
     updateMetaTags({
       title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
@@ -305,6 +321,8 @@ export default function App() {
         );
       case 'contact':
         return <ContactView />;
+      case 'privacy':
+        return <PrivacyPolicy />;
       case 'admin':
         return (
           <AdminView
