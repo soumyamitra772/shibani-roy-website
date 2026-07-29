@@ -20,7 +20,7 @@ export function stripMarkdown(content: string): string {
     .trim();
 }
 
-const DEFAULT_BASE_URL = 'https://shibani-roy.vercel.app';
+const DEFAULT_BASE_URL = 'https://shibaniroy.com';
 
 /**
  * Ensures an image URL is an absolute URL for social crawlers
@@ -29,7 +29,7 @@ export function getAbsoluteImageUrl(imageUrl?: string, baseOrigin?: string): str
   const origin = baseOrigin || DEFAULT_BASE_URL;
   if (!imageUrl) return `${origin}/images/shibani_hero_1784621056791.jpg`;
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl.replace('https://shibani-roy-website.vercel.app', origin);
+    return imageUrl.replace('https://shibaniroy.com', origin);
   }
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
   return `${origin}${cleanPath}`;
@@ -79,7 +79,7 @@ export function updateMetaTags({ title, description, image, url, type }: MetaTag
   }
 
   if (url) {
-    const cleanUrl = url.replace('https://shibani-roy-website.vercel.app', origin);
+    const cleanUrl = url.replace('https://shibaniroy.com', origin);
     setMetaTag('property', 'og:url', cleanUrl);
     setMetaTag('name', 'twitter:url', cleanUrl);
 
@@ -149,7 +149,7 @@ export function injectMetaTags(html: string, options: MetaTagOptions, baseOrigin
   }
 
   if (options.url) {
-    const cleanUrl = options.url.replace('https://shibani-roy-website.vercel.app', origin);
+    const cleanUrl = options.url.replace('https://shibaniroy.com', origin);
     replaceOrInsertMeta('property', 'og:url', cleanUrl);
     replaceOrInsertMeta('name', 'twitter:url', cleanUrl);
   }
