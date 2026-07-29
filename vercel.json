@@ -1,9 +1,25 @@
 {
   "redirects": [
     {
-      "source": "/(.*)",
-      "destination": "https://shibaniroy.com/$1",
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "shibani-roy.vercel.app"
+        }
+      ],
+      "destination": "https://shibaniroy.com/:path*",
       "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!assets/|images/|favicon|robots.txt).*)",
+      "destination": "/api/index"
     }
   ]
 }

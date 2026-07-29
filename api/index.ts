@@ -44,7 +44,7 @@ export interface SiteContent {
 
 const DEFAULT_AVATAR = '/images/shibani_avatar_1784621038657.jpg';
 const DEFAULT_HERO = '/images/shibani_hero_1784621056791.jpg';
-const DEFAULT_BASE_URL = 'https://shibani-roy.vercel.app';
+const DEFAULT_BASE_URL = 'https://shibaniroy.com';
 
 export const SEED_SITE_CONTENT: SiteContent = {
   hero_title: "Shibani Roy",
@@ -433,8 +433,8 @@ function getRawHtml(): string {
   <meta property="og:site_name" content="Shibani Roy" />
   <meta property="og:title" content="Shibani Roy | India's First Virtual AI Influencer" />
   <meta property="og:description" content="India's first virtual AI influencer, fashion model, and digital creator." />
-  <meta property="og:image" content="https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg" />
-  <meta property="og:url" content="https://shibani-roy.vercel.app/" />
+  <meta property="og:image" content="https://shibaniroy.com/images/shibani_hero_1784621056791.jpg" />
+  <meta property="og:url" content="https://shibaniroy.com/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" type="image/png" href="/images/shibani_logo_small_r_1784631811197.jpg" />
@@ -492,7 +492,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const host = (req.headers['x-forwarded-host'] || req.headers.host || '') as string;
     const proto = (req.headers['x-forwarded-proto'] || 'https') as string;
-    const baseOrigin = host ? `${proto}://${host}` : 'https://shibani-roy.vercel.app';
+    const baseOrigin = host ? `${proto}://${host}` : 'https://shibaniroy.com';
 
     const finalHtml = await processHtmlForRequest(rawHtml, requestUrl, baseOrigin);
 
@@ -510,7 +510,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch {
       return res.status(200).send(
         `<!doctype html><html><head><title>Shibani Roy</title>
-        <script>window.location.replace('/')</script>
         </head><body><div id="root"></div></body></html>`
       );
     }
