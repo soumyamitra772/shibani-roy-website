@@ -610,6 +610,25 @@ export const dbService = {
       }
     }
 
+    try {
+      const res = await fetch('/api/blog-posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        },
+        body: JSON.stringify(post)
+      });
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData && serverData.id) {
+          result = result || serverData;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API createBlogPost failed:', err);
+    }
+
     const localCreated = createLocalBlogPost(post);
     return result || localCreated;
   },
@@ -633,6 +652,25 @@ export const dbService = {
       }
     }
 
+    try {
+      const res = await fetch(`/api/blog-posts/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        },
+        body: JSON.stringify(postUpdates)
+      });
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData && serverData.id) {
+          result = result || serverData;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API updateBlogPost failed:', err);
+    }
+
     const localUpdated = updateLocalBlogPost(id, postUpdates);
     return result || localUpdated;
   },
@@ -647,6 +685,17 @@ export const dbService = {
       } catch (err) {
         console.warn('Supabase deleteBlogPost exception:', err);
       }
+    }
+
+    try {
+      await fetch(`/api/blog-posts/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        }
+      });
+    } catch (err) {
+      console.warn('Server API deleteBlogPost failed:', err);
     }
 
     deleteLocalBlogPost(id);
@@ -722,6 +771,25 @@ export const dbService = {
       }
     }
 
+    try {
+      const res = await fetch('/api/site-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData) {
+          result = result || serverData;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API updateSiteContent failed:', err);
+    }
+
     const localUpdated = updateLocalSiteContent(updates);
     const finalContent = result || localUpdated;
     localStorage.setItem('shibani_site_content', JSON.stringify(finalContent));
@@ -749,6 +817,25 @@ export const dbService = {
       } catch (err) {
         console.warn('Supabase submitContactMessage exception:', err);
       }
+    }
+
+    try {
+      const res = await fetch('/api/contact-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        },
+        body: JSON.stringify(message)
+      });
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData) {
+          result = result || serverData;
+        }
+      }
+    } catch (err) {
+      console.warn('Server API submitContactMessage failed:', err);
     }
 
     const localMsg = submitLocalContactMessage(message);
@@ -795,6 +882,17 @@ export const dbService = {
       } catch (err) {
         console.warn('Supabase deleteContactMessage exception:', err);
       }
+    }
+
+    try {
+      await fetch(`/api/contact-messages/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-key': getEnvVar('VITE_ADMIN_SECRET_KEY')
+        }
+      });
+    } catch (err) {
+      console.warn('Server API deleteContactMessage failed:', err);
     }
 
     deleteLocalContactMessage(id);

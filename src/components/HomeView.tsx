@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BlogPost, SiteContent } from '../types';
 import { stripMarkdown } from '../utils/seo';
 import { navigate } from '../utils/navigation';
@@ -11,6 +11,36 @@ interface HomeViewProps {
 }
 
 export default function HomeView({ siteContent, latestPosts, setRoute }: HomeViewProps) {
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Shibani Roy",
+      "description": "India's first virtual AI influencer — blending fashion, culture, and technology.",
+      "url": "https://shibaniroy.com",
+      "image": "https://shibaniroy.com/images/shibani_hero_1784621056791.jpg",
+      "sameAs": [
+        "https://www.instagram.com/shibanir96",
+        "https://www.facebook.com/profile.php?id=61579287061338",
+        "https://t.me/shibani_companion_bot"
+      ],
+      "jobTitle": "Virtual AI Influencer",
+      "nationality": "Indian",
+      "brand": {
+        "@type": "Brand",
+        "name": "Shibani Roy",
+        "url": "https://shibaniroy.com"
+      }
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   // Format ISO date to readable string
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

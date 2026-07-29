@@ -41,7 +41,7 @@ export interface SiteContent {
 
 const DEFAULT_AVATAR = '/images/shibani_avatar_1784621038657.jpg';
 const DEFAULT_HERO = '/images/shibani_hero_1784621056791.jpg';
-const DEFAULT_BASE_URL = 'https://shibani-roy.vercel.app';
+const DEFAULT_BASE_URL = 'https://shibaniroy.com';
 
 export const SEED_SITE_CONTENT: SiteContent = {
   hero_title: "Shibani Roy",
@@ -331,7 +331,7 @@ export async function processHtmlForRequest(rawHtml: string, urlPath: string, ba
   return injectMetaTags(rawHtml, metaOptions, baseOrigin);
 }
 
-export async function generateDynamicSitemap(baseUrl: string = 'https://shibani-roy.vercel.app'): Promise<string> {
+export async function generateDynamicSitemap(baseUrl: string = 'https://shibaniroy.com'): Promise<string> {
   const today = new Date().toISOString().split('T')[0];
   
   const staticUrls = [

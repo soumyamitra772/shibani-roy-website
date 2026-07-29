@@ -17,11 +17,78 @@ import {
 export async function createApp() {
   const app = express();
 
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  const requireAdminKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const apiKey = req.headers['x-admin-key'] || req.query.adminKey;
+    const validKey = process.env.ADMIN_SECRET_KEY;
+    
+    if (!validKey || apiKey !== validKey) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+  };
+
+  app.use(express.json({ limit: "1mb" }));
+  app.use(express.urlencoded({ limit: "1mb", extended: true }));
+
+  app.use((_req, res, next) => {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.anthropic.com;"
+    );
+    next();
+  });
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const baseUrl = "https://shibaniroy.com";
+      const posts = getServerBlogPosts();
+      
+      const staticPages: Array<{ url: string; priority: string; changefreq: string; lastmod?: string }> = [
+        { url: "/", priority: "1.0", changefreq: "weekly" },
+        { url: "/about", priority: "0.8", changefreq: "monthly" },
+        { url: "/services", priority: "0.8", changefreq: "monthly" },
+        { url: "/blog", priority: "0.9", changefreq: "daily" },
+        { url: "/contact", priority: "0.7", changefreq: "monthly" },
+        { url: "/privacy", priority: "0.3", changefreq: "yearly" },
+      ];
+
+      const blogUrls = posts.map((post) => ({
+        url: `/blog/${post.slug || post.id}`,
+        priority: "0.7",
+        changefreq: "monthly",
+        lastmod: (post as any).updated_at || post.created_at,
+      }));
+
+      const allUrls = [...staticPages, ...blogUrls];
+
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls
+  .map(
+    (page) => `  <url>
+    <loc>${baseUrl}${page.url}</loc>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+    ${page.lastmod ? `<lastmod>${new Date(page.lastmod).toISOString().split("T")[0]}</lastmod>` : ""}
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+      res.set("Content-Type", "application/xml");
+      res.send(sitemap);
+    } catch (err: any) {
+      res.status(500).send("Error generating sitemap");
+    }
   });
 
   // --- SITE CONTENT API ---
@@ -34,7 +101,7 @@ export async function createApp() {
     }
   });
 
-  app.post("/api/site-content", (req, res) => {
+  app.post("/api/site-content", requireAdminKey, (req, res) => {
     try {
       const updated = updateServerSiteContent(req.body);
       res.json(updated);
@@ -53,7 +120,7 @@ export async function createApp() {
     }
   });
 
-  app.post("/api/blog-posts", (req, res) => {
+  app.post("/api/blog-posts", requireAdminKey, (req, res) => {
     try {
       const saved = saveServerBlogPost(req.body);
       res.json(saved);
@@ -62,7 +129,7 @@ export async function createApp() {
     }
   });
 
-  app.put("/api/blog-posts/:id", (req, res) => {
+  app.put("/api/blog-posts/:id", requireAdminKey, (req, res) => {
     try {
       const saved = saveServerBlogPost({ ...req.body, id: req.params.id });
       res.json(saved);
@@ -71,9 +138,9 @@ export async function createApp() {
     }
   });
 
-  app.delete("/api/blog-posts/:id", (req, res) => {
+  app.delete("/api/blog-posts/:id", requireAdminKey, (req, res) => {
     try {
-      deleteServerBlogPost(req.params.id);
+      deleteServerBlogPost(req.params.id as string);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -99,9 +166,9 @@ export async function createApp() {
     }
   });
 
-  app.delete("/api/contact-messages/:id", (req, res) => {
+  app.delete("/api/contact-messages/:id", requireAdminKey, (req, res) => {
     try {
-      deleteServerContactMessage(req.params.id);
+      deleteServerContactMessage(req.params.id as string);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });

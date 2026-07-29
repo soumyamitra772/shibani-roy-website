@@ -1,17 +1,9 @@
 {
-  "version": 2,
-  "functions": {
-    "api/index.ts": {
-      "includeFiles": "dist/index.html"
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://shibaniroy.com/$1",
+      "permanent": true
     }
-  },
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/blog/:slug", "destination": "/api/index" },
-    { "source": "/about", "destination": "/api/index" },
-    { "source": "/blog", "destination": "/api/index" },
-    { "source": "/contact", "destination": "/api/index" },
-    { "source": "/sitemap.xml", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
