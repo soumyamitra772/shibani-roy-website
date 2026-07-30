@@ -81,6 +81,12 @@ export default function ContactView() {
                   General PR & agent representation enquiries can be directed to:
                 </p>
                 <a 
+                  href="mailto:hello@shibaniroy.com" 
+                  className="text-xs font-mono font-bold text-brand-600 hover:underline block mt-1"
+                >
+                  hello@shibaniroy.com
+                </a>
+                <a 
                   href="mailto:rshibani096@gmail.com" 
                   className="text-xs font-mono font-bold text-brand-600 hover:underline block mt-1"
                 >

@@ -428,6 +428,7 @@ function getRawHtml(): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="facebook-domain-verification" content="6yei3tuqk6sql856y0b8jvkgyrc94v" />
   <title>Shibani Roy | India's First Virtual AI Influencer</title>
   <meta name="description" content="India's first virtual AI influencer, fashion model, and digital creator." />
   <meta property="og:site_name" content="Shibani Roy" />
