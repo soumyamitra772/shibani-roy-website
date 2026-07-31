@@ -20,6 +20,7 @@ export default function Header({ currentRoute, setRoute, isAdminLoggedIn, onLogo
     { label: 'Home', id: 'home', path: '/' },
     { label: 'About', id: 'about', path: '/about' },
     { label: 'Services', id: 'services', path: '/services' },
+    { label: 'AI Companion', id: 'companion', path: '/companion' },
     { label: 'Blog', id: 'blog', path: '/blog' },
     { label: 'Contact', id: 'contact', path: '/contact' },
   ];

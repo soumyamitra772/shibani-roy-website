@@ -383,6 +383,7 @@ export async function generateDynamicSitemap(baseUrl: string = 'https://shibanir
   const staticUrls = [
     { loc: `${domain}/`, priority: '1.0', changefreq: 'weekly' },
     { loc: `${domain}/about`, priority: '0.8', changefreq: 'monthly' },
+    { loc: `${domain}/companion`, priority: '0.9', changefreq: 'weekly' },
     { loc: `${domain}/blog`, priority: '0.9', changefreq: 'weekly' },
     { loc: `${domain}/services`, priority: '0.7', changefreq: 'monthly' },
     { loc: `${domain}/contact`, priority: '0.7', changefreq: 'monthly' },

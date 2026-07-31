@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
 import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT } from '../services/db';
+import CompanionAdminView from './CompanionAdminView';
 import { renderMarkdown } from './AboutView';
 import { 
   Lock, User, Mail, Database, Eye, EyeOff, Save, Check, Loader, 
@@ -18,7 +19,7 @@ interface AdminViewProps {
   onUpdatePosts: () => void;
 }
 
-type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'privacy';
+type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'privacy' | 'companion';
 
 export default function AdminView({ 
   isAdminLoggedIn, 
@@ -968,6 +969,7 @@ export default function AdminView({
         <div className="lg:col-span-3 flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-1.5 scrollbar-none border-b lg:border-b-0 lg:border-r border-brand-100 pr-0 lg:pr-6 shrink-0">
           {[
             { id: 'blog', label: 'Blog Posts', icon: FileText },
+            { id: 'companion', label: 'AI Companion App', icon: Sparkles },
             { id: 'services', label: 'Services Page', icon: Briefcase },
             { id: 'site-home', label: 'Home & Hero Settings', icon: Settings },
             { id: 'site-about', label: 'Biography Bio', icon: Sparkles },
@@ -1087,6 +1089,9 @@ export default function AdminView({
               </div>
             </div>
           )}
+
+          {/* TAB: COMPANION APP MANAGEMENT */}
+          {activeTab === 'companion' && <CompanionAdminView />}
 
           {/* TAB 2: HERO CONFIGURATION */}
           {activeTab === 'site-home' && (

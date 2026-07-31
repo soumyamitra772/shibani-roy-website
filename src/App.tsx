@@ -6,6 +6,7 @@ import AboutView from './components/AboutView';
 import ServicesView from './components/ServicesView';
 import BlogView from './components/BlogView';
 import ContactView from './components/ContactView';
+import CompanionView from './components/CompanionView';
 import AdminView from './components/AdminView';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { dbService, isSupabaseConfigured, supabase } from './services/db';
@@ -147,6 +148,10 @@ export default function App() {
         setRoute({ page: 'services', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
+      } else if (pathname === '/companion' || pathname === '/companion/') {
+        setRoute({ page: 'companion', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       } else if (pathname === '/blog' || pathname === '/blog/') {
         setRoute({ page: 'blog', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -217,6 +222,17 @@ export default function App() {
         description: 'Brand collaborations, virtual modeling, sponsored content, and digital campaigns with Shibani Roy.',
         image: siteContent.hero_image_url,
         url: `${origin}/services`,
+        type: 'website',
+      });
+      return;
+    }
+
+    if (route.page === 'companion') {
+      updateMetaTags({
+        title: 'Meet Shibani Roy AI | Your AI Companion',
+        description: 'Shibani Roy AI is your conversational companion. Real conversations, voice calls, long-term memory, and AI selfies.',
+        image: siteContent.hero_image_url,
+        url: `${origin}/companion`,
         type: 'website',
       });
       return;
@@ -303,6 +319,8 @@ export default function App() {
         return <AboutView siteContent={siteContent} />;
       case 'services':
         return <ServicesView />;
+      case 'companion':
+        return <CompanionView />;
       case 'blog':
         return (
           <BlogView
