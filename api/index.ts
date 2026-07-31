@@ -214,9 +214,18 @@ export function injectMetaTags(html: string, options: MetaTagOptions, baseOrigin
   }
 
   if (options.url) {
-    const cleanUrl = options.url.replace('https://shibani-roy-website.vercel.app', origin);
+    const cleanUrl = options.url
+      .replace('https://shibani-roy.vercel.app', origin)
+      .replace('https://shibani-roy-website.vercel.app', origin);
     replaceOrInsertMeta('property', 'og:url', cleanUrl);
     replaceOrInsertMeta('name', 'twitter:url', cleanUrl);
+
+    const canonicalRegex = /<link\s+rel=["']canonical["'][^>]*\/?>/i;
+    if (canonicalRegex.test(updatedHtml)) {
+      updatedHtml = updatedHtml.replace(canonicalRegex, `<link rel="canonical" href="${cleanUrl}" />`);
+    } else {
+      updatedHtml = updatedHtml.replace('</head>', `  <link rel="canonical" href="${cleanUrl}" />\n</head>`);
+    }
   }
 
   if (options.type) {
@@ -367,15 +376,16 @@ export async function processHtmlForRequest(rawHtml: string, urlPath: string, ba
   return injectMetaTags(rawHtml, metaOptions, baseOrigin);
 }
 
-export async function generateDynamicSitemap(baseUrl: string = 'https://shibani-roy.vercel.app'): Promise<string> {
+export async function generateDynamicSitemap(baseUrl: string = 'https://shibaniroy.com'): Promise<string> {
+  const domain = (baseUrl && !baseUrl.includes('vercel.app')) ? baseUrl : 'https://shibaniroy.com';
   const today = new Date().toISOString().split('T')[0];
   
   const staticUrls = [
-    { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'weekly' },
-    { loc: `${baseUrl}/about`, priority: '0.8', changefreq: 'monthly' },
-    { loc: `${baseUrl}/blog`, priority: '0.9', changefreq: 'weekly' },
-    { loc: `${baseUrl}/services`, priority: '0.7', changefreq: 'monthly' },
-    { loc: `${baseUrl}/contact`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${domain}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: `${domain}/about`, priority: '0.8', changefreq: 'monthly' },
+    { loc: `${domain}/blog`, priority: '0.9', changefreq: 'weekly' },
+    { loc: `${domain}/services`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${domain}/contact`, priority: '0.7', changefreq: 'monthly' },
   ];
 
   let blogUrls: string[] = [];
@@ -391,7 +401,7 @@ export async function generateDynamicSitemap(baseUrl: string = 'https://shibani-
         .order('created_at', { ascending: false });
       if (data) {
         blogUrls = data.map(p => 
-          `  <url>\n    <loc>${baseUrl}/blog/${p.slug}</loc>\n    <lastmod>${p.created_at.split('T')[0]}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`
+          `  <url>\n    <loc>${domain}/blog/${p.slug}</loc>\n    <lastmod>${p.created_at.split('T')[0]}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`
         );
       }
     }
@@ -472,7 +482,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // --- API ENDPOINTS ---
     if (req.url === '/sitemap.xml' || req.url?.startsWith('/sitemap.xml')) {
-      const sitemap = await generateDynamicSitemap();
+      const sitemap = await generateDynamicSitemap('https://shibaniroy.com');
       res.setHeader('Content-Type', 'application/xml');
       res.setHeader('Cache-Control', 's-maxage=3600');
       return res.end(sitemap);
@@ -493,7 +503,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const host = (req.headers['x-forwarded-host'] || req.headers.host || '') as string;
     const proto = (req.headers['x-forwarded-proto'] || 'https') as string;
-    const baseOrigin = host ? `${proto}://${host}` : 'https://shibaniroy.com';
+    const baseOrigin = (host && !host.includes('vercel.app')) ? `${proto}://${host}` : 'https://shibaniroy.com';
 
     const finalHtml = await processHtmlForRequest(rawHtml, requestUrl, baseOrigin);
 
