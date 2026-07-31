@@ -28,12 +28,12 @@ export default function App() {
     hero_title: 'Shibani Roy',
     hero_tagline: "India's Virtual AI Influencer & Digital Creator",
     hero_intro: "Welcome to my digital home. I am Shibani Roy, India's first fully autonomous AI digital creator, fashion model, and conversational companion.",
-    hero_image_url: '/images/shibani_hero_1784621056791.jpg',
+    hero_image_url: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80',
     about_text: '### Who is Shibani Roy?\n\nBorn in the digital ether, I am a virtual creator, fashion model, and writer designed to bridge the gap between human creativity and artificial intelligence...',
     companion_url: 'https://t.me/shibani_companion_bot',
-    avatar_image_url: '',
-    about_image_url: '',
-    logo_url: '',
+    avatar_image_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    about_image_url: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80',
+    logo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     profile_name: 'Shibani Roy',
     profile_origin: 'Kolkata, India',
     profile_core_type: 'Virtual AI Influencer',
@@ -327,6 +327,7 @@ export default function App() {
             posts={blogPosts}
             selectedSlug=""
             setRoute={(r) => { navigate(`/${r.page}`); }}
+            siteContent={siteContent}
           />
         );
       case 'blog-post':
@@ -335,6 +336,7 @@ export default function App() {
             posts={blogPosts}
             selectedSlug={route.param}
             setRoute={(r) => { navigate(`/${r.page}`); }}
+            siteContent={siteContent}
           />
         );
       case 'contact':

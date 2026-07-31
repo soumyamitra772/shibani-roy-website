@@ -165,9 +165,13 @@ export default function AboutView({ siteContent }: AboutViewProps) {
       {/* Decorative Banner */}
       <div className="relative rounded-[32px] border-4 border-white overflow-hidden aspect-video shadow-2xl bg-brand-100">
         <img
-          src={siteContent.about_image_url || siteContent.hero_image_url || '/images/shibani_hero_1784621056791.jpg'}
+          src={siteContent.about_image_url && !siteContent.about_image_url.startsWith('/images/') ? siteContent.about_image_url : (siteContent.hero_image_url && !siteContent.hero_image_url.startsWith('/images/') ? siteContent.hero_image_url : 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80')}
           alt="Shibani Roy digital scene"
           loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80';
+          }}
           className="h-full w-full object-cover opacity-90 transition-transform duration-700 hover:scale-103"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-950/60 via-transparent to-transparent"></div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BlogPost } from '../types';
+import { BlogPost, SiteContent } from '../types';
 import { stripMarkdown } from '../utils/seo';
 import { renderMarkdown } from './AboutView';
 import { navigate } from '../utils/navigation';
@@ -9,14 +9,21 @@ interface BlogViewProps {
   posts: BlogPost[];
   selectedSlug: string;
   setRoute: (route: { page: string; param: string }) => void;
+  siteContent?: SiteContent;
 }
 
-export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProps) {
+export default function BlogView({ posts, selectedSlug, setRoute, siteContent }: BlogViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
   
   const postsPerPage = 6;
+  const fallbackAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+  const authorAvatar = (siteContent?.avatar_image_url && !siteContent.avatar_image_url.startsWith('/images/'))
+    ? siteContent.avatar_image_url
+    : (siteContent?.logo_url && !siteContent.logo_url.startsWith('/images/'))
+    ? siteContent.logo_url
+    : fallbackAvatar;
 
   // Reset pagination when searching
   useEffect(() => {
@@ -182,12 +189,18 @@ export default function BlogView({ posts, selectedSlug, setRoute }: BlogViewProp
         {/* About the virtual author section */}
         <div className="mx-auto max-w-3xl pt-8 border-t border-brand-100">
           <div className="rounded-3xl border border-brand-100 bg-white/80 p-6 flex flex-col sm:flex-row gap-5 items-center shadow-lg glass-card text-left">
-            <img
-              src="/images/shibani_avatar_1784621038657.jpg"
-              alt="Shibani Roy Portrait"
-              loading="lazy"
-              className="h-16 w-16 rounded-full object-cover border-2 border-brand-200 shadow-md"
-            />
+            <div className="relative h-16 w-16 rounded-full overflow-hidden border-2 border-brand-200 shadow-md shrink-0 bg-brand-50">
+              <img
+                src={authorAvatar}
+                alt="Shibani Roy Logo / Avatar"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = fallbackAvatar;
+                }}
+                className="h-full w-full object-cover"
+              />
+            </div>
             <div className="space-y-1 text-center sm:text-left">
               <h4 className="font-display font-bold text-brand-900 text-lg">Shibani Roy</h4>
               <p className="text-xs text-brand-600 font-mono font-bold uppercase tracking-wider">India's Leading Virtual AI Creator</p>

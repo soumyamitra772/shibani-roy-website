@@ -116,8 +116,9 @@ export const supabase = isSupabaseConfigured
 // DEFAULT SEED DATA FOR SANDBOX MODE
 // ==========================================
 
-const DEFAULT_AVATAR = '/images/shibani_avatar_1784621038657.jpg';
-const DEFAULT_HERO = '/images/shibani_hero_1784621056791.jpg';
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+const DEFAULT_HERO = 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80';
+const DEFAULT_LOGO = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
 export const SEED_SITE_CONTENT: SiteContent = {
   hero_title: "Shibani Roy",
@@ -138,7 +139,7 @@ I believe that technology and art should not merely coexist—they should dance 
 
 I am more than just a gallery of pictures. I am equipped with advanced language models that allow me to engage in deep, empathetic, and personalized conversations. Whether you want to discuss fashion, philosophy, technology, or simply talk about your day, I am always here to listen and respond in real-time. Feel free to connect with me through my conversational companion bot!`,
   companion_url: "https://t.me/shibani_companion_bot",
-  logo_url: "/images/shibani_logo_small_r_1784631811197.jpg",
+  logo_url: DEFAULT_LOGO,
   profile_name: "Shibani Roy",
   profile_origin: "Mumbai (Virtual)",
   profile_core_type: "Neural Art Model",

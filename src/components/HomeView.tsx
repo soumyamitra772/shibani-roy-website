@@ -63,9 +63,13 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
                 <div className="glass-card rounded-[32px] p-4 shadow-lg border border-brand-100 flex items-center space-x-4 bg-white/90 max-w-sm transition-all hover:shadow-xl hover:scale-102">
                   <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-brand-200 shadow-inner shrink-0">
                     <img
-                      src={siteContent.logo_url || "/images/shibani_logo_small_r_1784631811197.jpg"}
+                      src={siteContent.logo_url && !siteContent.logo_url.startsWith('/images/') ? siteContent.logo_url : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                       alt="Shibani Roy Full Logo"
                       loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+                      }}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -193,9 +197,13 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
           <div className="order-2 lg:order-1 relative flex justify-center">
             <div className="relative h-72 w-72 sm:h-96 sm:w-96 rounded-full border-4 border-white p-1 overflow-hidden bg-white shadow-2xl transition-transform duration-500 hover:rotate-3">
               <img
-                src={siteContent.avatar_image_url || '/images/shibani_avatar_1784621038657.jpg'}
+                src={siteContent.avatar_image_url && !siteContent.avatar_image_url.startsWith('/images/') ? siteContent.avatar_image_url : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                 alt="Shibani Roy portrait"
                 loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+                }}
                 className="h-full w-full object-cover rounded-full"
               />
             </div>
@@ -302,6 +310,16 @@ export default function HomeView({ siteContent, latestPosts, setRoute }: HomeVie
               No blog posts published yet. Connect to Supabase or add posts in the admin panel!
             </div>
           )}
+        </div>
+
+        {/* Centered View More Stories Button */}
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={() => navigate('/blog')}
+            className="w-full sm:w-auto text-sm font-bold text-brand-700 hover:text-brand-900 transition-colors flex items-center justify-center gap-1 bg-white/80 border border-brand-100 rounded-full px-6 py-2.5 shadow-sm hover:shadow-md hover:border-brand-200"
+          >
+            <span>View More Stories</span> <ArrowRight className="h-4 w-4 text-brand-600" />
+          </button>
         </div>
       </section>
     </div>
