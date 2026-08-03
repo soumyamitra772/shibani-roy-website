@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
 import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT } from '../services/db';
 import CompanionAdminView from './CompanionAdminView';
+import AdminLegalPages from '../pages/admin/AdminLegalPages';
 import { renderMarkdown } from './AboutView';
 import { 
   Lock, User, Mail, Database, Eye, EyeOff, Save, Check, Loader, 
@@ -19,7 +20,7 @@ interface AdminViewProps {
   onUpdatePosts: () => void;
 }
 
-type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'privacy' | 'companion';
+type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'legal' | 'privacy' | 'companion';
 
 export default function AdminView({ 
   isAdminLoggedIn, 
@@ -971,6 +972,7 @@ export default function AdminView({
             { id: 'blog', label: 'Blog Posts', icon: FileText },
             { id: 'companion', label: 'AI Companion App', icon: Sparkles },
             { id: 'services', label: 'Services Page', icon: Briefcase },
+            { id: 'legal', label: 'Legal Pages', icon: FileText },
             { id: 'site-home', label: 'Home & Hero Settings', icon: Settings },
             { id: 'site-about', label: 'Biography Bio', icon: Sparkles },
             { id: 'privacy', label: 'Privacy Policy', icon: Shield },
@@ -2078,6 +2080,9 @@ export default function AdminView({
               </form>
             </div>
           )}
+
+          {/* TAB: LEGAL PAGES */}
+          {activeTab === 'legal' && <AdminLegalPages />}
         </div>
       </div>
     </div>

@@ -1,5 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
-import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData, LegalPageData } from '../types';
+
+export const DEFAULT_TERMS_CONTENT: LegalPageData = {
+  id: 'terms',
+  title: 'Terms & Conditions',
+  content: `<p>Welcome to Shibani Roy AI. By accessing or using our website, AI companion services, and digital features, you agree to be bound by these Terms & Conditions.</p><h2>1. Acceptance of Terms</h2><p>By interacting with Shibani Roy across our website or third-party messaging channels, you acknowledge that Shibani Roy is a virtual AI entity designed for creative, conversational, and entertainment purposes.</p><h2>2. Intellectual Property</h2><p>All content, branding, visual avatars, digital art, text, and software associated with Shibani Roy are the exclusive intellectual property of Shibani Roy and its creators.</p><h2>3. User Conduct</h2><p>Users must not engage in abusive, harassing, or illegal conduct when interacting with the AI companion or our digital services.</p><h2>4. Modifications</h2><p>We reserve the right to update these Terms & Conditions at any time. Continued use of our services constitutes acceptance of the updated terms.</p>`,
+  last_updated: '2026-07-29T00:00:00.000Z'
+};
+
+export const DEFAULT_REFUND_CONTENT: LegalPageData = {
+  id: 'refund',
+  title: 'Refund & Cancellation Policy',
+  content: `<p>Thank you for using Shibani Roy AI services. Please read our Refund & Cancellation Policy carefully.</p><h2>1. Digital Services & Subscriptions</h2><p>All purchases for Shibani Roy AI digital services, companion subscriptions, or virtual modeling commissions are digital products and processed electronically.</p><h2>2. Refund Eligibility</h2><p>Due to the immediate provisioning of AI computing resources and digital content, payments are non-refundable once service access has been granted, except where required by applicable law.</p><h2>3. Subscription Cancellations</h2><p>You may cancel your ongoing subscription at any time. Your access will remain active until the end of the current billing cycle, and no further charges will be incurred.</p><h2>4. Contact & Support</h2><p>If you experience any billing discrepancies or technical issues with your purchase, please contact our support team at <a href="mailto:rshibani096@gmail.com">rshibani096@gmail.com</a> within 7 days of purchase.</p>`,
+  last_updated: '2026-07-29T00:00:00.000Z'
+};
 
 export const DEFAULT_PRIVACY_CONTENT: PrivacyPolicyData = {
   lastUpdated: 'July 29, 2026',
@@ -1187,6 +1201,68 @@ export const dbService = {
     const stringified = JSON.stringify(data);
     await this.updateSiteSetting('privacy_policy', stringified);
     return data;
+  },
+
+  async getLegalPage(id: string): Promise<LegalPageData> {
+    const defaultPage = id === 'refund' ? DEFAULT_REFUND_CONTENT : DEFAULT_TERMS_CONTENT;
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('legal_pages')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (error) {
+          console.warn(`Supabase getLegalPage error for ${id}:`, error);
+        } else if (data) {
+          return {
+            id: data.id || id,
+            title: data.title || defaultPage.title,
+            content: data.content || defaultPage.content,
+            last_updated: data.last_updated || defaultPage.last_updated
+          };
+        }
+      } catch (err) {
+        console.warn(`Failed fetching legal page ${id} from Supabase:`, err);
+      }
+    }
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const cached = localStorage.getItem(`shibani_legal_page_${id}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          console.warn('Failed to parse cached legal page:', e);
+        }
+      }
+    }
+
+    return defaultPage;
+  },
+
+  async updateLegalPage(id: string, title: string, content: string): Promise<LegalPageData> {
+    const last_updated = new Date().toISOString();
+    const payload: LegalPageData = { id, title, content, last_updated };
+
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('legal_pages')
+        .upsert(payload, { onConflict: 'id' });
+
+      if (error) {
+        console.error(`Supabase upsert error for legal_pages (${id}):`, error);
+        throw error;
+      }
+    }
+
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(`shibani_legal_page_${id}`, JSON.stringify(payload));
+    }
+
+    return payload;
   }
 };
+
 

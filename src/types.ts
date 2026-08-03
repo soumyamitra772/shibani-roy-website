@@ -71,3 +71,11 @@ export interface PrivacyPolicyData {
   sections: PrivacySectionData[];
 }
 
+export interface LegalPageData {
+  id: string;
+  title: string;
+  content: string;
+  last_updated: string;
+}
+
+

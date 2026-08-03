@@ -1,6 +1,7 @@
 import React from 'react';
 import { SiteContent } from '../types';
 import { navigate } from '../utils/navigation';
+import { Link } from './Link';
 import { Sparkles, Heart, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 interface FooterProps {
@@ -55,14 +56,24 @@ export default function Footer({ siteContent }: FooterProps) {
           </div>
 
           {/* Links Section */}
-          <div className="flex justify-center space-x-6 text-sm font-semibold text-zinc-600">
-            <a onClick={() => navigate('/')} className="cursor-pointer hover:text-brand-600 transition">Home</a>
-            <a onClick={() => navigate('/about')} className="cursor-pointer hover:text-brand-600 transition">About</a>
-            <a onClick={() => navigate('/services')} className="cursor-pointer hover:text-brand-600 transition">Services</a>
-            <a onClick={() => navigate('/blog')} className="cursor-pointer hover:text-brand-600 transition">Blog</a>
-            <a onClick={() => navigate('/contact')} className="cursor-pointer hover:text-brand-600 transition">Contact</a>
-            <a onClick={() => navigate('/privacy')} className="cursor-pointer hover:text-brand-600 transition">Privacy</a>
-            <a onClick={() => navigate('/admin')} className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</a>
+          <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold text-zinc-600">
+              <Link to="/" className="cursor-pointer hover:text-brand-600 transition">Home</Link>
+              <Link to="/about" className="cursor-pointer hover:text-brand-600 transition">About</Link>
+              <Link to="/services" className="cursor-pointer hover:text-brand-600 transition">Services</Link>
+              <Link to="/blog" className="cursor-pointer hover:text-brand-600 transition">Blog</Link>
+              <Link to="/contact" className="cursor-pointer hover:text-brand-600 transition">Contact</Link>
+              <Link to="/admin" className="cursor-pointer hover:text-brand-700 transition font-bold text-brand-600">Admin</Link>
+            </div>
+
+            {/* Legal Pages Muted Row */}
+            <div className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+              <Link to="/privacy" className="hover:text-brand-600 transition">Privacy Policy</Link>
+              <span className="text-zinc-400">|</span>
+              <Link to="/terms" className="hover:text-brand-600 transition">Terms & Conditions</Link>
+              <span className="text-zinc-400">|</span>
+              <Link to="/refund" className="hover:text-brand-600 transition">Refund & Cancellation</Link>
+            </div>
           </div>
 
           {/* Copyright Section */}
@@ -79,3 +90,4 @@ export default function Footer({ siteContent }: FooterProps) {
     </footer>
   );
 }
+

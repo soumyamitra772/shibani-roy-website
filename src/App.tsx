@@ -9,6 +9,8 @@ import ContactView from './components/ContactView';
 import CompanionView from './components/CompanionView';
 import AdminView from './components/AdminView';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsPage from './pages/TermsPage';
+import RefundPage from './pages/RefundPage';
 import { dbService, isSupabaseConfigured, supabase } from './services/db';
 import { BlogPost, SiteContent } from './types';
 import { updateMetaTags, stripMarkdown } from './utils/seo';
@@ -164,6 +166,14 @@ export default function App() {
         setRoute({ page: 'privacy', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
+      } else if (pathname === '/terms' || pathname === '/terms/' || pathname === '/terms-and-conditions') {
+        setRoute({ page: 'terms', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else if (pathname === '/refund' || pathname === '/refund/' || pathname === '/refund-policy') {
+        setRoute({ page: 'refund', param: '' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       } else if (pathname === '/admin' || pathname === '/admin/') {
         setRoute({ page: 'admin', param: '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -271,6 +281,28 @@ export default function App() {
       return;
     }
 
+    if (route.page === 'terms') {
+      updateMetaTags({
+        title: 'Terms & Conditions | Shibani Roy',
+        description: 'Terms & Conditions for Shibani Roy — Virtual AI Influencer & Creator.',
+        image: siteContent.hero_image_url,
+        url: `${origin}/terms`,
+        type: 'website',
+      });
+      return;
+    }
+
+    if (route.page === 'refund') {
+      updateMetaTags({
+        title: 'Refund & Cancellation Policy | Shibani Roy',
+        description: 'Refund & Cancellation Policy for Shibani Roy AI services.',
+        image: siteContent.hero_image_url,
+        url: `${origin}/refund`,
+        type: 'website',
+      });
+      return;
+    }
+
     // Default / Home page (route.page === 'home')
     updateMetaTags({
       title: "Shibani Roy | India's First Virtual AI Influencer & Creator",
@@ -343,6 +375,10 @@ export default function App() {
         return <ContactView />;
       case 'privacy':
         return <PrivacyPolicy />;
+      case 'terms':
+        return <TermsPage />;
+      case 'refund':
+        return <RefundPage />;
       case 'admin':
         return (
           <AdminView
