@@ -204,10 +204,14 @@ export default function App() {
       const post = blogPosts.find((p) => p.slug === route.param);
       if (post) {
         const plainTextExcerpt = stripMarkdown(post.content).slice(0, 160);
+        const effectiveOgImage = (post.og_image && post.og_image.trim() !== '') 
+          ? post.og_image.trim() 
+          : (post.feature_image_url || siteContent.hero_image_url);
+
         updateMetaTags({
           title: post.seo_title || `${post.title} | Shibani Roy`,
           description: post.meta_description || plainTextExcerpt || 'Read this article by Shibani Roy.',
-          image: post.og_image || post.feature_image_url || siteContent.hero_image_url,
+          image: effectiveOgImage,
           url: `${origin}/blog/${post.slug}`,
           type: 'article',
         });

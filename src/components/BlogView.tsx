@@ -99,8 +99,8 @@ export default function BlogView({ posts, selectedSlug, setRoute, siteContent }:
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Article",
-              "headline": post.title,
-              "image": post.feature_image_url || 'https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg',
+              "headline": post.seo_title || post.title,
+              "image": (post.og_image && post.og_image.trim() !== '') ? post.og_image.trim() : (post.feature_image_url || 'https://shibani-roy.vercel.app/images/shibani_hero_1784621056791.jpg'),
               "datePublished": post.created_at,
               "dateModified": post.created_at,
               "author": {
