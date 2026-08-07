@@ -205,9 +205,9 @@ export default function App() {
       if (post) {
         const plainTextExcerpt = stripMarkdown(post.content).slice(0, 160);
         updateMetaTags({
-          title: `${post.title} | Shibani Roy`,
-          description: plainTextExcerpt || 'Read this article by Shibani Roy.',
-          image: post.feature_image_url || siteContent.hero_image_url,
+          title: post.seo_title || `${post.title} | Shibani Roy`,
+          description: post.meta_description || plainTextExcerpt || 'Read this article by Shibani Roy.',
+          image: post.og_image || post.feature_image_url || siteContent.hero_image_url,
           url: `${origin}/blog/${post.slug}`,
           type: 'article',
         });

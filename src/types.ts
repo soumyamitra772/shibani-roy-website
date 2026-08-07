@@ -6,6 +6,10 @@ export interface BlogPost {
   feature_image_url: string;
   status: 'draft' | 'published';
   created_at: string;
+  focus_keyphrase?: string;
+  seo_title?: string;
+  meta_description?: string;
+  og_image?: string;
 }
 
 export interface SiteContent {

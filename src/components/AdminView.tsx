@@ -4,11 +4,13 @@ import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT } fr
 import CompanionAdminView from './CompanionAdminView';
 import AdminLegalPages from '../pages/admin/AdminLegalPages';
 import { renderMarkdown } from './AboutView';
+import { stripMarkdown } from '../utils/seo';
 import { 
   Lock, User, Mail, Database, Eye, EyeOff, Save, Check, Loader, 
   Plus, Edit2, Trash2, Settings, FileText, Inbox, ChevronRight,
   ArrowLeft, Upload, Sparkles, HelpCircle, AlertCircle, RefreshCw,
-  Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X, Shield
+  Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X, Shield,
+  Globe, Search
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -399,14 +401,24 @@ export default function AdminView({
       slug: '',
       content: 'Write your story here in markdown...',
       feature_image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-      status: 'draft'
+      status: 'draft',
+      focus_keyphrase: '',
+      seo_title: '',
+      meta_description: '',
+      og_image: ''
     });
     setEditorPreviewMode(false);
   };
 
   const handleOpenEditPost = (post: BlogPost) => {
     setPostEditorMode('edit');
-    setEditingPost({ ...post });
+    setEditingPost({ 
+      ...post,
+      focus_keyphrase: post.focus_keyphrase || '',
+      seo_title: post.seo_title || '',
+      meta_description: post.meta_description || '',
+      og_image: post.og_image || ''
+    });
     setEditorPreviewMode(false);
   };
 
@@ -839,6 +851,110 @@ export default function AdminView({
                   placeholder="Write post content here using markdown..."
                   className="w-full bg-white border border-brand-200 rounded-[24px] py-4.5 px-5 text-sm text-brand-950 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 font-sans leading-relaxed shadow-sm"
                 ></textarea>
+              </div>
+
+              {/* SEO Settings Section */}
+              <div className="rounded-[32px] border border-brand-100 bg-white/80 p-6 space-y-5 shadow-xl glass-card text-left">
+                <div className="border-b border-brand-100 pb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600">
+                      <Search className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-base text-brand-950">SEO Settings</h3>
+                      <p className="text-[11px] text-brand-500 font-medium">Search Engine Optimization & Social Media Cards</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Focus Keyphrase */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono text-brand-700 uppercase tracking-wider block font-bold">FOCUS KEYPHRASE</label>
+                  <input
+                    type="text"
+                    value={editingPost.focus_keyphrase || ''}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, focus_keyphrase: e.target.value }))}
+                    placeholder="e.g. AI life coach, Shibani Roy"
+                    className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 placeholder-brand-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
+                  />
+                </div>
+
+                {/* 2. SEO Title */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-mono text-brand-700 uppercase tracking-wider block font-bold">SEO TITLE</label>
+                    <span className={`text-xs font-mono font-bold ${
+                      (editingPost.seo_title || '').length > 60 ? 'text-red-600' : 'text-zinc-400'
+                    }`}>
+                      {(editingPost.seo_title || '').length} / 60
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={editingPost.seo_title || ''}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, seo_title: e.target.value }))}
+                    placeholder="e.g. I Am Not ChatGPT | Shibani Roy"
+                    className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 placeholder-brand-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
+                  />
+                </div>
+
+                {/* 3. Meta Description */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-mono text-brand-700 uppercase tracking-wider block font-bold">META DESCRIPTION</label>
+                    <span className={`text-xs font-mono font-bold ${
+                      (editingPost.meta_description || '').length > 160 ? 'text-red-600' : 'text-zinc-400'
+                    }`}>
+                      {(editingPost.meta_description || '').length} / 160
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={editingPost.meta_description || ''}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, meta_description: e.target.value }))}
+                    placeholder="Write a compelling summary under 160 characters..."
+                    className="w-full bg-white border border-brand-200 rounded-[20px] py-3 px-5 text-sm text-brand-950 placeholder-brand-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm leading-relaxed resize-none font-medium"
+                  ></textarea>
+                </div>
+
+                {/* 6. Live Google Search Preview */}
+                <div className="space-y-2 pt-2 border-t border-brand-100">
+                  <label className="text-xs font-mono text-brand-700 uppercase tracking-wider block font-bold">GOOGLE SEARCH PREVIEW</label>
+                  <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm space-y-1.5 font-sans text-left">
+                    <div className="flex items-center gap-2 text-xs text-zinc-800">
+                      <div className="w-4 h-4 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-[9px] shrink-0">
+                        S
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-zinc-900 leading-none">Shibani Roy</span>
+                        <span className="text-[11px] text-zinc-500 leading-tight font-mono">
+                          https://shibaniroy.com/blog/{editingPost.slug || 'your-article-slug'}
+                        </span>
+                      </div>
+                    </div>
+                    <h4 className="text-base sm:text-lg font-medium text-[#1a0dab] hover:underline cursor-pointer leading-snug pt-0.5">
+                      {editingPost.seo_title || editingPost.title || 'Post Title Preview'}
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#4d5156] leading-relaxed line-clamp-2">
+                      {editingPost.meta_description || stripMarkdown(editingPost.content || '').slice(0, 160) || 'Article body summary preview will appear here...'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 4. OG Image URL */}
+                <div className="space-y-1.5 pt-2 border-t border-brand-100">
+                  <label className="text-xs font-mono text-brand-700 uppercase tracking-wider block font-bold">OG IMAGE URL</label>
+                  <input
+                    type="text"
+                    value={editingPost.og_image || ''}
+                    onChange={(e) => setEditingPost(prev => ({ ...prev, og_image: e.target.value }))}
+                    placeholder="https://shibaniroy.com/images/cover.jpg"
+                    className="w-full bg-white border border-brand-200 rounded-full py-3 px-5 text-sm text-brand-950 placeholder-brand-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm font-semibold"
+                  />
+                  <p className="text-[11px] text-zinc-500 font-medium">
+                    This image appears when shared on LinkedIn, Facebook and Twitter
+                  </p>
+                </div>
               </div>
             </div>
 
