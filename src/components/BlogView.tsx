@@ -3,6 +3,7 @@ import { BlogPost, SiteContent } from '../types';
 import { stripMarkdown } from '../utils/seo';
 import { renderMarkdown } from './AboutView';
 import { navigate } from '../utils/navigation';
+import CommentSection from './CommentSection';
 import { ArrowLeft, Calendar, User, Clock, ChevronLeft, ChevronRight, Search, Share2, Check, Sparkles } from 'lucide-react';
 
 interface BlogViewProps {
@@ -240,6 +241,11 @@ export default function BlogView({ posts, selectedSlug, setRoute, siteContent }:
             </div>
           </div>
         )}
+
+        {/* Comment Section */}
+        <div className="mx-auto max-w-3xl">
+          <CommentSection postId={post.id} />
+        </div>
       </article>
     );
   }

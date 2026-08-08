@@ -82,4 +82,13 @@ export interface LegalPageData {
   last_updated: string;
 }
 
+export interface BlogComment {
+  id: string;
+  post_id: string;
+  name: string;
+  message: string;
+  created_at: string;
+  status: 'pending' | 'approved';
+}
+
 

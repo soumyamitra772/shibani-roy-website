@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData, LegalPageData } from '../types';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData, LegalPageData, BlogComment } from '../types';
 
 export const DEFAULT_TERMS_CONTENT: LegalPageData = {
   id: 'terms',
@@ -1264,5 +1264,62 @@ export const dbService = {
     return payload;
   }
 };
+
+export async function getApprovedComments(postId: string): Promise<BlogComment[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('blog_comments')
+        .select('*')
+        .eq('post_id', postId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('Supabase error fetching comments, checking fallback:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    const raw = localStorage.getItem(`blog_comments_${postId}`);
+    if (raw) {
+      try {
+        const comments: BlogComment[] = JSON.parse(raw);
+        return comments.filter(c => c.status === 'approved');
+      } catch (e) {
+        console.warn('Failed to parse local comments:', e);
+      }
+    }
+  }
+  return [];
+}
+
+export async function submitComment(postId: string, name: string, message: string): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase.from('blog_comments').insert([
+      { post_id: postId, name: name.trim(), message: message.trim(), status: 'pending' }
+    ]);
+    if (error) throw error;
+    return;
+  }
+
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    const raw = localStorage.getItem(`blog_comments_${postId}`);
+    const comments: BlogComment[] = raw ? JSON.parse(raw) : [];
+    const newComment: BlogComment = {
+      id: Date.now().toString(),
+      post_id: postId,
+      name: name.trim(),
+      message: message.trim(),
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    comments.push(newComment);
+    localStorage.setItem(`blog_comments_${postId}`, JSON.stringify(comments));
+    return;
+  }
+  throw new Error('Database is not configured and local storage is unavailable.');
+}
 
 
