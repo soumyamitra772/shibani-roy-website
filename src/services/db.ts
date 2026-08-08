@@ -1322,4 +1322,97 @@ export async function submitComment(postId: string, name: string, message: strin
   throw new Error('Database is not configured and local storage is unavailable.');
 }
 
+export async function getAllComments(): Promise<BlogComment[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('blog_comments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('Supabase error fetching all comments, checking fallback:', err);
+    }
+  }
+
+  const allComments: BlogComment[] = [];
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('blog_comments_')) {
+        try {
+          const comments: BlogComment[] = JSON.parse(localStorage.getItem(key) || '[]');
+          allComments.push(...comments);
+        } catch (e) {
+          console.warn('Failed to parse comments from key:', key, e);
+        }
+      }
+    }
+  }
+  return allComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+export async function updateCommentStatus(
+  commentId: string,
+  status: 'approved' | 'pending'
+): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase
+      .from('blog_comments')
+      .update({ status })
+      .eq('id', commentId);
+    if (error) throw error;
+    return;
+  }
+
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('blog_comments_')) {
+        try {
+          const comments: BlogComment[] = JSON.parse(localStorage.getItem(key) || '[]');
+          const idx = comments.findIndex(c => c.id === commentId);
+          if (idx !== -1) {
+            comments[idx].status = status;
+            localStorage.setItem(key, JSON.stringify(comments));
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to update comment in key:', key, e);
+        }
+      }
+    }
+  }
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    const { error } = await supabase
+      .from('blog_comments')
+      .delete()
+      .eq('id', commentId);
+    if (error) throw error;
+    return;
+  }
+
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('blog_comments_')) {
+        try {
+          const comments: BlogComment[] = JSON.parse(localStorage.getItem(key) || '[]');
+          const filtered = comments.filter(c => c.id !== commentId);
+          if (filtered.length !== comments.length) {
+            localStorage.setItem(key, JSON.stringify(filtered));
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to delete comment from key:', key, e);
+        }
+      }
+    }
+  }
+}
+
 

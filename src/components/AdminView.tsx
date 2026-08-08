@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData } from '../types';
-import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT } from '../services/db';
+import { BlogPost, SiteContent, ContactMessage, ServiceItem, ServicesPageSettings, PrivacySectionData, PrivacyPolicyData, BlogComment } from '../types';
+import { dbService, isSupabaseConfigured, supabase, DEFAULT_PRIVACY_CONTENT, getAllComments, updateCommentStatus, deleteComment } from '../services/db';
 import CompanionAdminView from './CompanionAdminView';
 import AdminLegalPages from '../pages/admin/AdminLegalPages';
 import { renderMarkdown } from './AboutView';
@@ -10,7 +10,7 @@ import {
   Plus, Edit2, Trash2, Settings, FileText, Inbox, ChevronRight,
   ArrowLeft, Upload, Sparkles, HelpCircle, AlertCircle, RefreshCw,
   Briefcase, ArrowUp, ArrowDown, Layers, ToggleLeft, ToggleRight, X, Shield,
-  Globe, Search
+  Globe, Search, MessageCircle, CheckCircle, Clock, Filter
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -22,7 +22,7 @@ interface AdminViewProps {
   onUpdatePosts: () => void;
 }
 
-type AdminTab = 'blog' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'legal' | 'privacy' | 'companion';
+type AdminTab = 'blog' | 'comments' | 'site-home' | 'site-about' | 'inbox' | 'services' | 'legal' | 'privacy' | 'companion';
 
 export default function AdminView({ 
   isAdminLoggedIn, 
@@ -88,6 +88,11 @@ export default function AdminView({
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
   const [savePrivacySuccess, setSavePrivacySuccess] = useState(false);
 
+  // Comments Moderation state
+  const [comments, setComments] = useState<BlogComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsFilter, setCommentsFilter] = useState<'all' | 'pending' | 'approved'>('all');
+
   const loadServicesData = async () => {
     if (!isAdminLoggedIn) return;
     setIsLoadingServices(true);
@@ -120,10 +125,45 @@ export default function AdminView({
     }
   };
 
+  const loadCommentsData = async () => {
+    if (!isAdminLoggedIn) return;
+    setIsLoadingComments(true);
+    try {
+      const data = await getAllComments();
+      setComments(data || []);
+    } catch (err) {
+      console.error('Failed to load comments in admin:', err);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleToggleCommentStatus = async (commentId: string, newStatus: 'approved' | 'pending') => {
+    try {
+      await updateCommentStatus(commentId, newStatus);
+      await loadCommentsData();
+    } catch (err: any) {
+      console.error('Error updating comment status:', err);
+      alert('Failed to update comment status: ' + (err?.message || err));
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+    try {
+      await deleteComment(commentId);
+      await loadCommentsData();
+    } catch (err: any) {
+      console.error('Error deleting comment:', err);
+      alert('Failed to delete comment: ' + (err?.message || err));
+    }
+  };
+
   useEffect(() => {
     if (isAdminLoggedIn) {
       loadServicesData();
       loadPrivacyData();
+      loadCommentsData();
     }
   }, [isAdminLoggedIn]);
 
@@ -1059,6 +1099,8 @@ export default function AdminView({
   // ==========================================
   // RENDER MAIN ADMIN DASHBOARD
   // ==========================================
+  const pendingCommentsCount = comments.filter(c => c.status === 'pending').length;
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 animate-fade-in text-left">
       {/* Title */}
@@ -1086,6 +1128,7 @@ export default function AdminView({
         <div className="lg:col-span-3 flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-1.5 scrollbar-none border-b lg:border-b-0 lg:border-r border-brand-100 pr-0 lg:pr-6 shrink-0">
           {[
             { id: 'blog', label: 'Blog Posts', icon: FileText },
+            { id: 'comments', label: 'Comments', icon: MessageCircle, badgeCount: pendingCommentsCount, isPendingBadge: pendingCommentsCount > 0 },
             { id: 'companion', label: 'AI Companion App', icon: Sparkles },
             { id: 'services', label: 'Services Page', icon: Briefcase },
             { id: 'legal', label: 'Legal Pages', icon: FileText },
@@ -1114,6 +1157,8 @@ export default function AdminView({
                   <span className={`text-[10px] font-mono rounded-full h-5 px-2 flex items-center justify-center font-bold border ${
                     isActive 
                       ? 'bg-white text-brand-900 border-white' 
+                      : tab.isPendingBadge
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
                       : 'bg-brand-100 text-brand-800 border-brand-200'
                   }`}>
                     {tab.badgeCount}
@@ -1204,6 +1249,184 @@ export default function AdminView({
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: COMMENTS MODERATION */}
+          {activeTab === 'comments' && (
+            <div className="space-y-6 text-left animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-100 pb-4">
+                <div>
+                  <h3 className="font-display font-bold text-xl text-brand-950 flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-brand-600" />
+                    Comments Moderation
+                  </h3>
+                  <p className="text-xs text-brand-500 font-medium mt-1">
+                    Review, approve, or remove reader comments submitted across all published articles.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={loadCommentsData}
+                    disabled={isLoadingComments}
+                    className="p-2 px-3.5 rounded-full border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 transition flex items-center gap-1.5 text-xs shadow-sm font-semibold cursor-pointer"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-brand-600 ${isLoadingComments ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="flex items-center justify-between flex-wrap gap-3 bg-brand-50/50 p-2.5 rounded-2xl border border-brand-100">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-mono font-bold text-brand-600 uppercase tracking-wider px-2 flex items-center gap-1">
+                    <Filter className="h-3.5 w-3.5" /> Filter:
+                  </span>
+                  {(['all', 'pending', 'approved'] as const).map((filterOpt) => {
+                    const count = filterOpt === 'all' 
+                      ? comments.length 
+                      : comments.filter(c => c.status === filterOpt).length;
+                    const isActive = commentsFilter === filterOpt;
+                    return (
+                      <button
+                        key={filterOpt}
+                        onClick={() => setCommentsFilter(filterOpt)}
+                        className={`text-xs px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer capitalize ${
+                          isActive
+                            ? 'bg-brand-600 text-white shadow-sm'
+                            : 'bg-white text-brand-700 hover:bg-brand-100 border border-brand-200/60'
+                        }`}
+                      >
+                        {filterOpt} <span className="font-mono text-[11px] opacity-80">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {pendingCommentsCount > 0 && (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-amber-600" />
+                    <span><strong>{pendingCommentsCount}</strong> comment{pendingCommentsCount > 1 ? 's' : ''} awaiting review</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-4">
+                {isLoadingComments ? (
+                  <div className="flex justify-center items-center py-16 text-brand-600">
+                    <Loader className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (() => {
+                  const filteredComments = comments.filter(c => {
+                    if (commentsFilter === 'pending') return c.status === 'pending';
+                    if (commentsFilter === 'approved') return c.status === 'approved';
+                    return true;
+                  }).sort((a, b) => {
+                    if (commentsFilter === 'all') {
+                      if (a.status === 'pending' && b.status !== 'pending') return -1;
+                      if (a.status !== 'pending' && b.status === 'pending') return 1;
+                    }
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                  });
+
+                  if (filteredComments.length === 0) {
+                    return (
+                      <div className="py-16 text-center rounded-[32px] border border-dashed border-brand-200 bg-white/60 p-8 glass-card space-y-2">
+                        <MessageCircle className="h-8 w-8 text-brand-300 mx-auto" />
+                        <p className="text-sm font-bold text-brand-900">No comments found</p>
+                        <p className="text-xs text-zinc-500">
+                          {commentsFilter === 'pending' 
+                            ? 'No pending comments waiting for review!' 
+                            : commentsFilter === 'approved' 
+                            ? 'No approved comments yet.' 
+                            : 'No comments submitted across blog articles.'}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return filteredComments.map((comment) => {
+                    const matchedPost = posts.find(p => p.id === comment.post_id);
+                    const postTitle = matchedPost ? matchedPost.title : `Post ID: ${comment.post_id}`;
+                    const initial = comment.name ? comment.name.trim().charAt(0).toUpperCase() : '?';
+
+                    return (
+                      <div
+                        key={comment.id}
+                        className={`rounded-[28px] border p-6 space-y-4 transition-all shadow-sm glass-card ${
+                          comment.status === 'pending'
+                            ? 'bg-amber-50/30 border-amber-200 hover:border-amber-300'
+                            : 'bg-white/90 border-brand-100 hover:border-brand-200'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-100/80 pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-brand-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-sm">
+                              {initial}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-bold text-brand-950 text-sm">{comment.name}</h4>
+                                {comment.status === 'pending' ? (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
+                                    <Clock className="h-3 w-3 text-amber-600" /> Pending
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3 text-emerald-600" /> Approved
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                                Article: <span className="font-semibold text-brand-800">{postTitle}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-xs font-mono text-zinc-400 font-medium shrink-0">
+                            {formatDate(comment.created_at)}
+                          </div>
+                        </div>
+
+                        {/* Comment text */}
+                        <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap pl-1 sm:pl-13">
+                          {comment.message}
+                        </p>
+
+                        {/* Card Actions */}
+                        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-brand-100/60">
+                          {comment.status === 'pending' ? (
+                            <button
+                              onClick={() => handleToggleCommentStatus(comment.id, 'approved')}
+                              className="px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 text-white" /> Approve Comment
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleCommentStatus(comment.id, 'pending')}
+                              className="px-4 py-2 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold hover:bg-amber-200 transition inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Clock className="h-3.5 w-3.5 text-amber-600" /> Mark Pending
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="px-3.5 py-2 rounded-full bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition inline-flex items-center gap-1 cursor-pointer"
+                            title="Delete Comment"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-500" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           )}
